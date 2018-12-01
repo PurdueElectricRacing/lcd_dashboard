@@ -1,0 +1,10 @@
+*
+!.gitignore
+!*.HMI
+!*.py
+!lcd_steering/
+!lcd_steering/Inc/*
+!lcd_steering/Src/*
+!lcd_steering/Inc/
+!lcd_steering/Src/
+!lcd_steering/*.ioc
