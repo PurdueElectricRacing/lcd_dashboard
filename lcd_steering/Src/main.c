@@ -114,8 +114,13 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
-  MX_CAN1_Init();
+  //MX_CAN1_Init();
   /* USER CODE BEGIN 2 */
+  //canFilter(); TODO
+  initRTOSObjects(); //start tasks
+
+  //HAL_CAN_START(&hcan1);
+  //HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
 
   /* USER CODE END 2 */
 
@@ -317,15 +322,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
-void HAL_USART_RxCpltCallback(UART_HandleTypeDef* huart) {
-	__NOP();
-	HAL_UART_Receive_IT(lcd.uart, myrx_data, 7);
-}
-
-void HAL_USART_TxCpltCallback(UART_HandleTypeDef* huart) {
-	__NOP();
-}
 
 /* USER CODE END 4 */
 
