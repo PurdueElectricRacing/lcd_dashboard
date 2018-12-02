@@ -8,6 +8,7 @@
 
 void HAL_USART_RxCpltCallback(UART_HandleTypeDef* huart) {
 	uart_rx_t rx;
+	rx.rx_size = 6;
 	HAL_UART_Receive_IT(huart, rx.rx_buffer, rx.rx_size);
 	xQueueSendToBackFromISR(lcd.q_rx_uart, &rx, 0);
 }
@@ -19,6 +20,7 @@ void HAL_USART_TxCpltCallback(UART_HandleTypeDef* huart) {
 
 void task_txUart() {
 	uart_tx_t tx;
+	tx.tx_size = 6;
 	while (1) {
 		//check if this task is triggered
 			if (xQueuePeek(lcd.q_tx_uart, &tx, portMAX_DELAY) == pdTRUE)

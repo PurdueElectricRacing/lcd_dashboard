@@ -53,16 +53,6 @@ b'e\x01\x01\x01\xff\xff\xff' //Active Aero Enable
 #define TX_UART_QUEUE_SIZE 10
 
 typedef struct {
-	uint8_t rx_buffer[6];
-	uint16_t rx_size;
-}uart_rx_t;
-
-typedef struct {
-	uint8_t tx_buffer[6];
-	uint16_t tx_size;
-}uart_tx_t;
-
-typedef struct {
 	CAN_HandleTypeDef* can;
 	UART_HandleTypeDef* uart;
 
@@ -72,13 +62,12 @@ typedef struct {
 	QueueHandle_t q_tx_uart;
 }lcd_t;
 
-int lcd_main(void);
+void task_lcd_main();
 int btn_handler(uint8_t btn);
 void initRTOSObjects(void);
 
 lcd_t lcd;
 
-extern uart_rx_t rx_buff;
 extern CAN_HandleTypeDef hcan1;
 extern UART_HandleTypeDef huart1;
 

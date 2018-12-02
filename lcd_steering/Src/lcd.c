@@ -29,12 +29,12 @@ void initRTOSObjects(void) {
 	lcd.q_tx_uart = xQueueCreate(TX_UART_QUEUE_SIZE, sizeof(uart_tx_t));
 
 	//create tasks
-	xTaskCreate(lcd_main, "Main Task", 256, NULL, 1, NULL);
+	xTaskCreate(task_lcd_main, "Main Task", 256, NULL, 1, NULL);
 	xTaskCreate(task_txCan, "Tx Can Task", 256, NULL, 1, NULL);
 	xTaskCreate(task_txUart, "TX Uart Task", 256, NULL, 1, NULL);
 }
 
-int lcd_main(void) {
+void task_lcd_main() {
 	lcd.can = &hcan1;
 	lcd.uart = &huart1;
 
@@ -42,6 +42,7 @@ int lcd_main(void) {
 	uint16_t counter = 0;
 	uart_rx_t rx_uart;
 	while (1) {
+		HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
 		//handle message requests from the LCD screen
 		if (xQueuePeek(lcd.q_rx_uart, &rx_uart, portMAX_DELAY) == pdTRUE) {
 			xQueueReceive(lcd.q_rx_uart, &rx_uart, portMAX_DELAY);
@@ -83,9 +84,5 @@ int lcd_main(void) {
 				}
 			}
 		}
-
-
-
 	}
-	return 0;
 }

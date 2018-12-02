@@ -52,7 +52,7 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "can.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -76,8 +76,7 @@ void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-void HAL_USART_RxCpltCallback(UART_HandleTypeDef* huart);
-void HAL_USART_TxCpltCallback(UART_HandleTypeDef* huart);
+
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -116,11 +115,12 @@ int main(void)
   MX_USART1_UART_Init();
   //MX_CAN1_Init();
   /* USER CODE BEGIN 2 */
-  //canFilter(); TODO
+  can_filter_init();
+
   initRTOSObjects(); //start tasks
 
-  //HAL_CAN_START(&hcan1);
-  //HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
+  HAL_CAN_START(&hcan1);
+  HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
 
   /* USER CODE END 2 */
 
