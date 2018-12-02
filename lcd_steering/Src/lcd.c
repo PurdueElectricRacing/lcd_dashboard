@@ -39,13 +39,20 @@ int btn_handler(uint8_t btn) {
 int lcd_main(void) {
 	lcd.can = &hcan1;
 	lcd.uart = &huart1;
-
-	uint8_t data[7] = { 'h', 'e', 'l', 'l', 'o', '!', '\n'};
+	HAL_UART_Receive_IT(lcd.uart, myrx_data, 7);
+	mytx_data[0] = 'h';
+	mytx_data[1] = 'e';
+	mytx_data[2] = 'l';
+	mytx_data[3] = 'l';
+	mytx_data[4] = 'o';
+	mytx_data[5] = '!';
+	mytx_data[6] = '\n';
 	while (1) {
+		HAL_Delay(500);
 		HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
-		HAL_UART_Transmit(lcd.uart, &data, 7, 100);
+		HAL_UART_Transmit_IT(lcd.uart, mytx_data, 7);
+		HAL_Delay(500);
 		HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
-		HAL_Delay(1000);
 
 		if (start_flag) {
 			btn_handler(1);
@@ -66,7 +73,6 @@ int lcd_main(void) {
 			btn_handler(6);
 			sport_mode = 0;
 		}
-		HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
 	}
 	return 0;
 }

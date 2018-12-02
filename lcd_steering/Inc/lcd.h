@@ -69,6 +69,8 @@ int send_can_msg(CanTxMsgTypeDef* msg);
 int btn_handler(uint8_t btn);
 
 lcd_t lcd;
+uint8_t mytx_data[7];
+uint8_t myrx_data[7];
 
 extern uart_rx_t rx_buff;
 extern CAN_HandleTypeDef hcan1;

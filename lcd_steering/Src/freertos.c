@@ -1,8 +1,8 @@
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file           : main.h
-  * @brief          : Header for main.c file.
-  *                   This file contains the common defines of the application.
+  * File Name          : freertos.c
+  * Description        : Code for freertos applications
   ******************************************************************************
   * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -46,45 +46,46 @@
   *
   ******************************************************************************
   */
-
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __MAIN_H__
-#define __MAIN_H__
+/* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
+#include "FreeRTOS.h"
+#include "task.h"
+#include "main.h"
 
-/* USER CODE BEGIN Includes */
-#include "lcd.h"
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */     
+
 /* USER CODE END Includes */
 
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+
+/* USER CODE END PTD */
+
 /* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
 
-#define SUCCESS_Pin GPIO_PIN_1
-#define SUCCESS_GPIO_Port GPIOA
-#define STATUS_LED_Pin GPIO_PIN_2
-#define STATUS_LED_GPIO_Port GPIOA
+/* USER CODE END PD */
 
-/* ########################## Assert Selection ############################## */
-/**
-  * @brief Uncomment the line below to expanse the "assert_param" macro in the 
-  *        HAL drivers code
-  */
-/* #define USE_FULL_ASSERT    1U */
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
 
-/* USER CODE BEGIN Private defines */
+/* USER CODE END PM */
 
-/* USER CODE END Private defines */
+/* Private variables ---------------------------------------------------------*/
+/* USER CODE BEGIN Variables */
 
-#ifdef __cplusplus
- extern "C" {
-#endif
-void _Error_Handler(char *, int);
+/* USER CODE END Variables */
 
-#define Error_Handler() _Error_Handler(__FILE__, __LINE__)
-#ifdef __cplusplus
-}
-#endif
+/* Private function prototypes -----------------------------------------------*/
+/* USER CODE BEGIN FunctionPrototypes */
+   
+/* USER CODE END FunctionPrototypes */
 
-#endif /* __MAIN_H__ */
+/* Private application code --------------------------------------------------*/
+/* USER CODE BEGIN Application */
+     
+/* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
