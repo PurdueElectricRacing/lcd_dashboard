@@ -71,13 +71,14 @@ int lcd_main(void) {
 					//if Xth message then get ~1hz
 					if (counter++ % LCD_UPDATE_RATE == 0) {
 						//update the screen
-
+						//TODO how to send
 					}
 					break;
 				}
 				case MAIN_FAULT_ID:
 				{
 					//display whatever main faults to the screen
+					//TODO how to send
 					break;
 				}
 			}

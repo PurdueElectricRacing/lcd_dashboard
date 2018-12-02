@@ -54,8 +54,8 @@ void task_txCan() {
 
 void can_filter_init() {
 	CAN_FilterTypeDef FilterConf;
-	FilterConf.FilterIdHigh =         0xdead << 5; // TODO fix these
-	FilterConf.FilterIdLow =          0xbeef << 5; // TODO fix these
+	FilterConf.FilterIdHigh =         BMS_MSG_ID << 5;
+	FilterConf.FilterIdLow =          MAIN_FAULT_ID << 5;
 	FilterConf.FilterMaskIdHigh =     0x7ff;       // 3
 	FilterConf.FilterMaskIdLow =      0x7fe;       // 1
 	FilterConf.FilterFIFOAssignment = CAN_FilterFIFO0;
