@@ -53,6 +53,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "can.h"
+#include "stm32l4xx_hal_uart.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -115,10 +116,12 @@ int main(void)
   MX_USART1_UART_Init();
   MX_CAN1_Init();
   /* USER CODE BEGIN 2 */
+  //__HAL_UART_ENABLE_IT(&huart1, UART_IT_TC);
+  __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
+  HAL_UART_Receive_IT(&huart1, huart1.pRxBuffPtr, RX_SIZE_UART);
   can_filter_init();
   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
   initRTOSObjects(); //start tasks
-
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */

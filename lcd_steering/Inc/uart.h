@@ -8,9 +8,13 @@
 #ifndef UART_H_
 #define UART_H_
 #include "lcd.h"
+#include <string.h>
+
+//standard rx size constant
+#define RX_SIZE_UART 6
 
 typedef struct {
-	uint8_t rx_buffer[6];
+	uint8_t* rx_buffer;
 	uint16_t rx_size;
 }uart_rx_t;
 
