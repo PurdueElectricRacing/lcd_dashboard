@@ -64,7 +64,6 @@ typedef struct
 }CanRxMsgTypeDef;
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan);
-int send_can_msg(CanTxMsgTypeDef* msg);
 void task_txCan();
 void can_filter_init();
 

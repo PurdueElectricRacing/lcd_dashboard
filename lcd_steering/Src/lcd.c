@@ -7,8 +7,6 @@
 #include "lcd.h"
 
 int btn_handler(uint8_t btn) {
-	char* btns[6] = {"start", "stop", "active aero", "eco", "race", "sport"};
-	printf("%s button\n", btns[btn-1]);
 	CanTxMsgTypeDef msg;
 	msg.IDE = CAN_ID_STD;
 	msg.RTR = CAN_RTR_DATA;
@@ -21,6 +19,13 @@ int btn_handler(uint8_t btn) {
 	return 0;
 }
 
+void error_blink() {
+	while (1) {
+		HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
+		HAL_Delay(1000);
+	}
+}
+
 void initRTOSObjects(void) {
 	//initialize the queues
 	lcd.q_rx_can = xQueueCreate(RX_CAN_QUEUE_SIZE, sizeof(CanRxMsgTypeDef));
@@ -29,9 +34,15 @@ void initRTOSObjects(void) {
 	lcd.q_tx_uart = xQueueCreate(TX_UART_QUEUE_SIZE, sizeof(uart_tx_t));
 
 	//create tasks
-	xTaskCreate(task_lcd_main, "Main Task", 256, NULL, 1, NULL);
-	xTaskCreate(task_txCan, "Tx Can Task", 256, NULL, 1, NULL);
-	xTaskCreate(task_txUart, "TX Uart Task", 256, NULL, 1, NULL);
+	if (xTaskCreate(task_lcd_main, "Main Task", LCD_MAIN_STACK_SIZE, NULL, LCD_MAIN_PRIORTIY, NULL) != pdPASS) {
+		error_blink();
+	}
+	if (xTaskCreate(task_txCan, "Tx Can Task", TX_CAN_STACK_SIZE, NULL, TX_CAN_PRIORITY, NULL) != pdPASS) {
+		error_blink();
+	}
+	if (xTaskCreate(task_txUart, "TX Uart Task", TX_UART_STACK_SIZE, NULL, TX_UART_PRIORITY, NULL) != pdPASS) {
+		error_blink();
+	}
 }
 
 void task_lcd_main() {

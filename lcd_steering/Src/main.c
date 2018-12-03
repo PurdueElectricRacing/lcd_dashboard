@@ -113,14 +113,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
-  //MX_CAN1_Init();
+  MX_CAN1_Init();
   /* USER CODE BEGIN 2 */
   can_filter_init();
-
-  initRTOSObjects(); //start tasks
-
-  HAL_CAN_START(&hcan1);
   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
+  initRTOSObjects(); //start tasks
 
   /* USER CODE END 2 */
 

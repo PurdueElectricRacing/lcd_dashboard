@@ -17,20 +17,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 	xQueueSendFromISR(lcd.q_rx_can, &rx, 0);
 }
 
-int send_can_msg(CanTxMsgTypeDef * msg) {
-	CAN_TxHeaderTypeDef header;
-	header.DLC = msg->DLC;
-	header.IDE = msg->IDE;
-	header.RTR = msg->RTR;
-	header.StdId = msg->StdId;
-	header.TransmitGlobalTime = DISABLE;
-	uint32_t mailbox;
-	while (!HAL_CAN_GetTxMailboxesFreeLevel(lcd.can)); // while mailboxes not free
-	HAL_CAN_AddTxMessage(lcd.can, &header, msg->Data, &mailbox);
-
-	return 0;
-}
-
 void task_txCan() {
 	CanTxMsgTypeDef tx;
 

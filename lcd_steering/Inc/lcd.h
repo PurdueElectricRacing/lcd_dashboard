@@ -15,7 +15,6 @@
 #include "main.h"
 #include "uart.h"
 #include "can.h"
-#include <stdio.h>
 
 /*
 b'e\x00\x01\x00\xff\xff\xff' //start button
@@ -47,10 +46,20 @@ b'e\x01\x01\x01\xff\xff\xff' //Active Aero Enable
 #define MAIN_FAULT_ID		0x200
 
 //Queue Constants
-#define RX_CAN_QUEUE_SIZE 16
-#define TX_CAN_QUEUE_SIZE 16
-#define RX_UART_QUEUE_SIZE 10
-#define TX_UART_QUEUE_SIZE 10
+#define RX_CAN_QUEUE_SIZE 8
+#define TX_CAN_QUEUE_SIZE 8
+#define RX_UART_QUEUE_SIZE 5
+#define TX_UART_QUEUE_SIZE 5
+
+//Stack Constants
+#define LCD_MAIN_STACK_SIZE 128
+#define TX_CAN_STACK_SIZE	128
+#define TX_UART_STACK_SIZE	64
+
+//Priority Constatns
+#define LCD_MAIN_PRIORTIY 	1
+#define TX_CAN_PRIORITY		1
+#define TX_UART_PRIORITY	1
 
 typedef struct {
 	CAN_HandleTypeDef* can;
@@ -64,6 +73,7 @@ typedef struct {
 
 void task_lcd_main();
 int btn_handler(uint8_t btn);
+void error_blink();
 void initRTOSObjects(void);
 
 lcd_t lcd;
