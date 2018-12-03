@@ -56,6 +56,7 @@ void task_lcd_main() {
 		HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
 		//handle message requests from the LCD screen
 		if (xQueuePeek(lcd.q_rx_uart, &rx_uart, portMAX_DELAY) == pdTRUE) {
+			HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
 			xQueueReceive(lcd.q_rx_uart, &rx_uart, portMAX_DELAY);
 			if (rx_uart.rx_buffer[0] == START_ID_0 && rx_uart.rx_buffer[1] == START_ID_1) {
 				btn_handler(1);
