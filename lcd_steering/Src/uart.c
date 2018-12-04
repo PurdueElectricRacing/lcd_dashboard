@@ -31,6 +31,7 @@ void task_txUart() {
 			{
 				xQueueReceive(lcd.q_tx_uart, &tx, portMAX_DELAY);  //actually take item out of queue
 				HAL_UART_Transmit_IT(lcd.uart, tx.tx_buffer, tx.tx_size);
+				//free maybe TODO
 			}
 			time_to_wait = (TX_UART_RATE + time_init) - xTaskGetTickCount();
 			time_to_wait = (time_to_wait < 0) ? 0: time_to_wait;
