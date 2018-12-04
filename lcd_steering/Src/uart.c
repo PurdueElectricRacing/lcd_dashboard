@@ -9,7 +9,7 @@
 void HAL_USART_RxCpltCallback(UART_HandleTypeDef* huart) {
 	uart_rx_t rx;
 	rx.rx_size = 6;
-	rx.rx_buffer = memcpy(&rx.rx_buffer, huart->pRxBuffPtr, rx.rx_size);
+	rx.rx_buffer = memcpy(&rx.rx_buffer, myrx_data, rx.rx_size);
 	xQueueSendToBackFromISR(lcd.q_rx_uart, &rx, 0);
 }
 

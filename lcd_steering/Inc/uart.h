@@ -8,6 +8,7 @@
 #ifndef UART_H_
 #define UART_H_
 #include "lcd.h"
+#include "main.h"
 #include <string.h>
 
 //standard rx size constant
@@ -23,8 +24,11 @@ typedef struct {
 	uint16_t tx_size;
 }uart_tx_t;
 
+
 void HAL_USART_RxCpltCallback(UART_HandleTypeDef* huart);
 void HAL_USART_TxCpltCallback(UART_HandleTypeDef* huart);
 void task_txUart();
+
+extern uint8_t myrx_data[];
 
 #endif /* UART_H_ */
