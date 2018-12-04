@@ -15,6 +15,7 @@
 #include "main.h"
 #include "uart.h"
 #include "can.h"
+#include "nextion_hardware.h"
 #include "task.h"
 #include <string.h>
 #include <stdlib.h>
@@ -78,6 +79,12 @@ typedef struct {
 	QueueHandle_t q_rx_uart;
 	QueueHandle_t q_tx_uart;
 }lcd_t;
+
+typedef struct {
+	uint16_t pack_volt;				//Most recent pack voltage
+	uint8_t pack_soc;				//pack SOC
+	uint8_t  high_temp;			//the current highest temperature of a cell
+}bms_data_t;
 
 void task_lcd_main();
 int btn_handler(uint8_t btn);

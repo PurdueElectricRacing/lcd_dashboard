@@ -48,6 +48,7 @@ void initRTOSObjects(void) {
 void task_lcd_main() {
 	lcd.can = &hcan1;
 	lcd.uart = &huart1;
+	bms_data_t bms;
 	uint8_t* buff = malloc(sizeof(uint8_t) * 16);
 	buff[0] =  'C';
 	buff[1] =  'h';
@@ -68,6 +69,7 @@ void task_lcd_main() {
 	CanRxMsgTypeDef rx_can;
 	uint16_t counter = 0;
 	TickType_t time_init = 0;
+	TickType_t time_to_wait = 0;
 	uart_rx_t rx_uart;
 	while (1) {
 		time_init = xTaskGetTickCount();
@@ -103,7 +105,13 @@ void task_lcd_main() {
 					//if Xth message then get ~1hz
 					if (counter++ % LCD_UPDATE_RATE == 0) {
 						//update the screen
+						bms.pack_volt = (rx_can.Data[2] << 8) | rx_can.Data[3];
+						bms.pack_soc = rx_can.Data[4];
+						bms.high_temp = rx_can.Data[5];
 
+						update_lcd(set_value("Char", bms.pack_soc), 4 + SET_VALUE_EXTRA);
+						update_lcd(set_value("Volt", bms.pack_volt), 4 + SET_VALUE_EXTRA);
+						update_lcd(set_value("Temp", bms.high_temp), 4 + SET_VALUE_EXTRA);
 					}
 					break;
 				}
@@ -115,7 +123,10 @@ void task_lcd_main() {
 				}
 			}
 		}
-
-		vTaskDelayUntil(&time_init, LCD_MAIN_RATE);
+		time_to_wait = (LCD_MAIN_RATE + time_init) - xTaskGetTickCount();
+		time_to_wait = (time_to_wait < 0) ? 0: time_to_wait; //if negative don't delay
+		vTaskDelay(time_to_wait);
 	}
 }
+
+
