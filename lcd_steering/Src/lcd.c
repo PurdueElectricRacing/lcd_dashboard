@@ -56,17 +56,21 @@ void task_lcd_main() {
 	bms_data_t bms;
 	CanRxMsgTypeDef rx_can;
 	uint16_t counter = 0;
+	uint16_t counter_status = 0;
 	TickType_t time_init = 0;
 	TickType_t time_to_wait = 0;
 	TickType_t time_fin = 0;
 	uart_rx_t rx_uart;
 	while (1) {
 		time_init = xTaskGetTickCount();
-		HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
+		if (counter_status++ % 100 == 0) {
+			HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
+			btn_handler(1);
+		}
 		//update_lcd(buff, 1);
-		set_value("Char", 30);
-		set_text("noti", "hello world!");
-		//btn_handler(1);
+		//set_value("Char", 30);
+		//set_text("noti", "hello world!");
+
 		//handle message requests from the LCD screen
 		if (xQueuePeek(lcd.q_rx_uart, &rx_uart, TIMEOUT) == pdTRUE) {
 			//HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);

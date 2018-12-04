@@ -43,7 +43,7 @@ b'e\x01\x01\x01\xff\xff\xff' //Active Aero Enable
 #define RACE_MODE_ID_1 		0x03
 #define SPORT_MODE_ID_0		0x02 //Sport Mode ID
 #define SPORT_MODE_ID_1		0x04
-#define LCD_UPDATE_RATE		100	 //pick a rate that makes 6b1 ~1hz used currently message is sent at 100hz
+#define LCD_UPDATE_RATE		1	 //pick a rate that makes 6b1 ~1hz used currently message is sent at 100hz
 //Can Message Constants
 #define BMS_MSG_ID			0x6B1
 //#define BMS_FAULT_ID
@@ -67,7 +67,7 @@ b'e\x01\x01\x01\xff\xff\xff' //Active Aero Enable
 #define TX_UART_PRIORITY	1
 
 //Rates
-#define LCD_MAIN_RATE 		1000 / portTICK_RATE_MS
+#define LCD_MAIN_RATE 		10 / portTICK_RATE_MS
 #define TX_CAN_RATE		10 / portTICK_RATE_MS
 #define TX_UART_RATE	10 / portTICK_RATE_MS
 
