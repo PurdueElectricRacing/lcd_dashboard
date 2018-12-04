@@ -11,6 +11,7 @@
 
 //standard rx size constant
 #define RX_SIZE_UART 6
+#define DELAY_UART	 10 / portTICK_RATE_MS
 
 typedef struct {
 	uint8_t* rx_buffer;

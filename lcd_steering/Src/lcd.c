@@ -33,6 +33,11 @@ void initRTOSObjects(void) {
 	lcd.q_rx_uart = xQueueCreate(RX_UART_QUEUE_SIZE, sizeof(uart_rx_t));
 	lcd.q_tx_uart = xQueueCreate(TX_UART_QUEUE_SIZE, sizeof(uart_tx_t));
 
+	lcd.q_rx_can_debug = (xQUEUE_my*) lcd.q_rx_can;
+	lcd.q_tx_can_debug = (xQUEUE_my*) lcd.q_tx_can;
+	lcd.q_rx_uart_debug = (xQUEUE_my*) lcd.q_rx_uart;
+	lcd.q_tx_uart_debug = (xQUEUE_my*) lcd.q_tx_uart;
+
 	//create tasks
 	if (xTaskCreate(task_lcd_main, "Main Task", LCD_MAIN_STACK_SIZE, NULL, LCD_MAIN_PRIORTIY, NULL) != pdPASS) {
 		error_blink();
@@ -53,18 +58,19 @@ void task_lcd_main() {
 	uint16_t counter = 0;
 	TickType_t time_init = 0;
 	TickType_t time_to_wait = 0;
+	TickType_t time_fin = 0;
 	uart_rx_t rx_uart;
 	while (1) {
 		time_init = xTaskGetTickCount();
-		HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
+		HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
 		//update_lcd(buff, 1);
-		//set_value("Char", 30);
-		//set_text("noti", "hello world!");
+		set_value("Char", 30);
+		set_text("noti", "hello world!");
 		//btn_handler(1);
 		//handle message requests from the LCD screen
-		if (xQueuePeek(lcd.q_rx_uart, &rx_uart, portMAX_DELAY) == pdTRUE) {
-			HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
-			xQueueReceive(lcd.q_rx_uart, &rx_uart, portMAX_DELAY);
+		if (xQueuePeek(lcd.q_rx_uart, &rx_uart, TIMEOUT) == pdTRUE) {
+			//HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
+			xQueueReceive(lcd.q_rx_uart, &rx_uart, TIMEOUT);
 			if (rx_uart.rx_buffer[0] == START_ID_0 && rx_uart.rx_buffer[1] == START_ID_1) {
 				btn_handler(1);
 			} else if (rx_uart.rx_buffer[0] == STOP_ID_0 && rx_uart.rx_buffer[1] == STOP_ID_1) {
@@ -82,8 +88,8 @@ void task_lcd_main() {
 
 		//receive can messages and update the lcd screen as necessary
 		//Live SOC/Voltage/Temperature
-		if (xQueuePeek(lcd.q_rx_can, &rx_can, portMAX_DELAY) == pdTRUE) {
-			xQueueReceive(lcd.q_rx_can, &rx_can, portMAX_DELAY);
+		if (xQueuePeek(lcd.q_rx_can, &rx_can, TIMEOUT) == pdTRUE) {
+			xQueueReceive(lcd.q_rx_can, &rx_can, TIMEOUT);
 
 			switch (rx_can.StdId) {
 				case BMS_MSG_ID:
@@ -109,8 +115,9 @@ void task_lcd_main() {
 				}
 			}
 		}
-		time_to_wait = (LCD_MAIN_RATE + time_init) - xTaskGetTickCount();
-		time_to_wait = (time_to_wait < 0) ? 0: time_to_wait; //if negative don't delay
+		time_fin =  xTaskGetTickCount();
+		time_to_wait = (LCD_MAIN_RATE + time_init) - time_fin;
+		time_to_wait = (LCD_MAIN_RATE + time_init)  < time_fin ? 0: time_to_wait;
 		vTaskDelay(time_to_wait);
 	}
 }

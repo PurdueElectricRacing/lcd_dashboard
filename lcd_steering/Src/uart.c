@@ -24,17 +24,22 @@ void task_txUart() {
 	uart_tx_t tx;
 	TickType_t time_init = 0;
 	TickType_t time_to_wait = 0;
+	TickType_t time_fin = 0;
+	uint8_t* temp_pt = NULL;
 	while (1) {
 			time_init = xTaskGetTickCount();
 		//check if this task is triggered
-			if (xQueuePeek(lcd.q_tx_uart, &tx, portMAX_DELAY) == pdTRUE)
+			if (xQueuePeek(lcd.q_tx_uart, &tx, TIMEOUT) == pdTRUE)
 			{
-				xQueueReceive(lcd.q_tx_uart, &tx, portMAX_DELAY);  //actually take item out of queue
+				xQueueReceive(lcd.q_tx_uart, &tx, TIMEOUT);  //actually take item out of queue
+				temp_pt = tx.tx_buffer;
 				HAL_UART_Transmit_IT(lcd.uart, tx.tx_buffer, tx.tx_size);
-				//free maybe TODO
+				HAL_Delay(DELAY_UART * 4);
+				free(temp_pt);
 			}
-			time_to_wait = (TX_UART_RATE + time_init) - xTaskGetTickCount();
-			time_to_wait = (time_to_wait < 0) ? 0: time_to_wait;
+			time_fin =  xTaskGetTickCount();
+			time_to_wait = (TX_UART_RATE + time_init) - time_fin;
+			time_to_wait = (TX_UART_RATE + time_init)  < time_fin ? 0: time_to_wait;
 			vTaskDelay(time_to_wait);
 	}
 }
@@ -43,9 +48,12 @@ void update_lcd(uint8_t* buffer, uint8_t size) {
 	uart_tx_t tx;
 	tx.tx_size = size;
 	tx.tx_buffer = buffer;
-	memcpy(tx.tx_buffer, buffer, size);
-	if (xQueueSendToBack(lcd.q_tx_uart, &tx, 100) != pdTRUE) {
+	while(uxQueueMessagesWaiting(lcd.q_tx_uart) == TX_UART_QUEUE_SIZE) {
+		vTaskDelay(WAIT_QUEUE_FULL); //wait till space opens up
+	}
+	if (xQueueSendToBack(lcd.q_tx_uart, &tx, TIMEOUT) != pdTRUE) {
+		//should never get here
+		free(buffer);
 		error_blink();
 	}
-	free(tx.tx_buffer);
 }

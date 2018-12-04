@@ -11,7 +11,7 @@
 #include "lcd.h"
 
 #define SET_VALUE_EXTRA 13
-#define SET_TEXT_EXTRA  13
+#define SET_TEXT_EXTRA  8
 #define ASCII_OFFSET 	48
 
 void set_value(char* str, uint16_t val);
