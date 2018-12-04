@@ -15,6 +15,9 @@
 #include "main.h"
 #include "uart.h"
 #include "can.h"
+#include "task.h"
+#include <string.h>
+#include <stdlib.h>
 
 /*
 b'e\x00\x01\x00\xff\xff\xff' //start button
@@ -60,6 +63,11 @@ b'e\x01\x01\x01\xff\xff\xff' //Active Aero Enable
 #define LCD_MAIN_PRIORTIY 	1
 #define TX_CAN_PRIORITY		1
 #define TX_UART_PRIORITY	1
+
+//Rates
+#define LCD_MAIN_RATE 		100 / portTICK_RATE_MS
+#define TX_CAN_RATE		100 / portTICK_RATE_MS
+#define TX_UART_RATE	100 / portTICK_RATE_MS
 
 typedef struct {
 	CAN_HandleTypeDef* can;

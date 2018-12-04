@@ -19,8 +19,9 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 
 void task_txCan() {
 	CanTxMsgTypeDef tx;
-
+	TickType_t time_init = 0;
 	while (1) {
+			time_init = xTaskGetTickCount();
 		//check if this task is triggered
 			if (xQueuePeek(lcd.q_tx_can, &tx, portMAX_DELAY) == pdTRUE)
 			{
@@ -35,6 +36,7 @@ void task_txCan() {
 				while (!HAL_CAN_GetTxMailboxesFreeLevel(lcd.can)); // while mailboxes not free
 				HAL_CAN_AddTxMessage(lcd.can, &header, tx.Data, &mailbox);
 			}
+			vTaskDelayUntil(time_init, TX_CAN_RATE);
 	}
 }
 

@@ -48,12 +48,31 @@ void initRTOSObjects(void) {
 void task_lcd_main() {
 	lcd.can = &hcan1;
 	lcd.uart = &huart1;
-
+	uint8_t* buff = malloc(sizeof(uint8_t) * 16);
+	buff[0] =  'C';
+	buff[1] =  'h';
+	buff[2] =  'a';
+	buff[3] =  'r';
+	buff[4] =  'g';
+	buff[5] =  'e';
+	buff[6] =  '.';
+	buff[7] =  'v';
+	buff[8] =  'a';
+	buff[9] =  'l';
+	buff[10] = '=';
+	buff[11] = '3';
+	buff[12] = '1';
+	buff[13] = 0xff;
+	buff[14] = 0xff;
+	buff[15] = 0xff;
 	CanRxMsgTypeDef rx_can;
 	uint16_t counter = 0;
+	TickType_t time_init = 0;
 	uart_rx_t rx_uart;
 	while (1) {
+		time_init = xTaskGetTickCount();
 		HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
+		update_lcd(buff, 1);
 		//handle message requests from the LCD screen
 		if (xQueuePeek(lcd.q_rx_uart, &rx_uart, portMAX_DELAY) == pdTRUE) {
 			HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
@@ -84,7 +103,7 @@ void task_lcd_main() {
 					//if Xth message then get ~1hz
 					if (counter++ % LCD_UPDATE_RATE == 0) {
 						//update the screen
-						//TODO how to send
+
 					}
 					break;
 				}
@@ -96,5 +115,7 @@ void task_lcd_main() {
 				}
 			}
 		}
+
+		vTaskDelayUntil(&time_init, LCD_MAIN_RATE);
 	}
 }
