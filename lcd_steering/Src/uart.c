@@ -6,18 +6,16 @@
  */
 #include "uart.h"
 
-void HAL_USART_RxCpltCallback(UART_HandleTypeDef* huart) {
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart) {
 	uart_rx_t rx;
-	rx.rx_size = 6;
+	rx.rx_size = RX_SIZE_UART;
 	rx.rx_buffer = malloc(sizeof(*rx.rx_buffer) * RX_SIZE_UART);
 	memcpy(rx.rx_buffer, myrx_data, rx.rx_size);
 	xQueueSendToBackFromISR(lcd.q_rx_uart, &rx, 0);
-	free(rx.rx_buffer);
 }
 
-void HAL_USART_TxCpltCallback(UART_HandleTypeDef* huart) {
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
 	//do nothing and exit
-	__NOP();
 }
 
 void task_txUart() {
@@ -34,7 +32,7 @@ void task_txUart() {
 				xQueueReceive(lcd.q_tx_uart, &tx, TIMEOUT);  //actually take item out of queue
 				temp_pt = tx.tx_buffer;
 				HAL_UART_Transmit_IT(lcd.uart, tx.tx_buffer, tx.tx_size);
-				HAL_Delay(DELAY_UART * 4);
+				HAL_Delay(DELAY_UART * 5);
 				free(temp_pt);
 			}
 			time_fin =  xTaskGetTickCount();

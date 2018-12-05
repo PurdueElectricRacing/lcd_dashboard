@@ -10,7 +10,7 @@
 #include "lcd.h"
 
 //standard rx size constant
-#define RX_SIZE_UART 6
+#define RX_SIZE_UART 7
 #define DELAY_UART	 10 / portTICK_RATE_MS
 
 typedef struct {
@@ -24,8 +24,6 @@ typedef struct {
 }uart_tx_t;
 
 
-void HAL_USART_RxCpltCallback(UART_HandleTypeDef* huart);
-void HAL_USART_TxCpltCallback(UART_HandleTypeDef* huart);
 void task_txUart();
 void update_lcd(uint8_t* buffer, uint8_t size);
 

@@ -68,6 +68,7 @@ void task_lcd_main() {
 	TickType_t time_fin = 0;
 	uart_rx_t rx_uart;
 	while (1) {
+		HAL_UART_Receive_IT(&huart1, myrx_data, RX_SIZE_UART);
 		time_init = xTaskGetTickCount();
 		if (counter_status++ % 100 == 0) {
 			HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
@@ -81,19 +82,20 @@ void task_lcd_main() {
 		if (xQueuePeek(lcd.q_rx_uart, &rx_uart, TIMEOUT) == pdTRUE) {
 			//HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
 			xQueueReceive(lcd.q_rx_uart, &rx_uart, TIMEOUT);
-			if (rx_uart.rx_buffer[0] == START_ID_0 && rx_uart.rx_buffer[1] == START_ID_1) {
+			if (rx_uart.rx_buffer[1] == START_ID_0 && rx_uart.rx_buffer[2] == START_ID_1) {
 				btn_handler(1);
-			} else if (rx_uart.rx_buffer[0] == STOP_ID_0 && rx_uart.rx_buffer[1] == STOP_ID_1) {
+			} else if (rx_uart.rx_buffer[1] == STOP_ID_0 && rx_uart.rx_buffer[2] == STOP_ID_1) {
+				btn_handler(1);
+			} else if (rx_uart.rx_buffer[1] == ACTIVE_AERO_ID_0 && rx_uart.rx_buffer[2] == ACTIVE_AERO_ID_1) {
 				btn_handler(2);
-			} else if (rx_uart.rx_buffer[0] == ACTIVE_AERO_ID_0 && rx_uart.rx_buffer[1] == ACTIVE_AERO_ID_1) {
+			} else if (rx_uart.rx_buffer[1] == ECO_MODE_ID_0 && rx_uart.rx_buffer[2] == ECO_MODE_ID_1) {
 				btn_handler(3);
-			} else if (rx_uart.rx_buffer[0] == ECO_MODE_ID_0 && rx_uart.rx_buffer[1] == ECO_MODE_ID_1) {
+			} else if (rx_uart.rx_buffer[1] == RACE_MODE_ID_0 && rx_uart.rx_buffer[2] == RACE_MODE_ID_1) {
 				btn_handler(4);
-			} else if (rx_uart.rx_buffer[0] == RACE_MODE_ID_0 && rx_uart.rx_buffer[1] == RACE_MODE_ID_1) {
+			} else if (rx_uart.rx_buffer[1] == SPORT_MODE_ID_0 && rx_uart.rx_buffer[2] == SPORT_MODE_ID_1) {
 				btn_handler(5);
-			} else if (rx_uart.rx_buffer[0] == SPORT_MODE_ID_0 && rx_uart.rx_buffer[1] == SPORT_MODE_ID_1) {
-				btn_handler(6);
 			}
+			free(rx_uart.rx_buffer);
 		}
 
 		//receive can messages and update the lcd screen as necessary
@@ -107,13 +109,39 @@ void task_lcd_main() {
 					//if Xth message then get ~1hz
 					if (counter++ % LCD_UPDATE_RATE == 0) {
 						//update the screen
-						bms.pack_volt = (rx_can.Data[2] << 8) | rx_can.Data[3];
-						bms.pack_soc = rx_can.Data[4];
+						bms.pack_volt = ((rx_can.Data[2] << 8) | rx_can.Data[3]) / 10;
+						bms.pack_soc = (rx_can.Data[4]) / 2;
 						bms.high_temp = rx_can.Data[5];
 
 						set_value("Char", bms.pack_soc);
 						set_value("Volt", bms.pack_volt);
 						set_value("Temp", bms.high_temp);
+
+						//temp color
+						if (bms.high_temp > BMS_OVER_TEMP_RED) {
+							set_bco("Temp", RED);
+						} else if (bms.high_temp > BMS_OVER_TEMP_YEL) {
+							set_bco("Temp", YELLOW);
+						} else {
+							set_bco("Temp", GREEN);
+						}
+						//volt color
+						if (bms.pack_volt < BMS_UNDER_VOLT_RED) {
+							set_bco("Volt", RED);
+						} else {
+							set_bco("Char", GREEN);
+						}
+
+						if (bms.pack_soc < BMS_SOC_RED) {
+							set_bco("Char", RED);
+							set_text("noti", "ECO mode Engaged you dead");
+						} else if (bms.pack_soc < BMS_SOC_YEL) {
+							set_bco("Char", YELLOW);
+							set_text("noti", "Recommend Eco mode big shoots");
+						} else {
+							set_bco("Char", GREEN);
+							set_text("noti", "Skrrrt Skrrt");
+						}
 					}
 					break;
 				}

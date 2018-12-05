@@ -74,6 +74,16 @@ b'e\x01\x01\x01\xff\xff\xff' //Active Aero Enable
 //Timeouts
 #define TIMEOUT			5 / portTICK_RATE_MS
 #define WAIT_QUEUE_FULL	30 / portTICK_RATE_MS
+
+//LCD Bounds Constants
+#define BMS_OVER_TEMP_RED	60
+#define BMS_OVER_TEMP_YEL	55
+#define BMS_UNDER_VOLT_RED	355
+#define BMS_SOC_RED			10
+#define	BMS_SOC_YEL			50
+#define BMS_SOC_GREEN		50
+
+
 typedef struct QueueDefinition
 {
 	int8_t *pcHead;					/*< Points to the beginning of the queue storage area. */
