@@ -14,7 +14,13 @@ int btn_handler(uint8_t btn) {
 
 	msg.StdId = 0x350;
 	msg.Data[0] = btn;
-
+	msg.Data[1] = 0;
+	msg.Data[2] = 0;
+	msg.Data[3] = 0;
+	msg.Data[4] = 0;
+	msg.Data[5] = 0;
+	msg.Data[6] = 0;
+	msg.Data[7] = 0;
 	xQueueSendToBack(lcd.q_tx_can, &msg, 100);
 	return 0;
 }
@@ -65,7 +71,7 @@ void task_lcd_main() {
 		time_init = xTaskGetTickCount();
 		if (counter_status++ % 100 == 0) {
 			HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
-			btn_handler(1);
+			//btn_handler(1);
 		}
 		//update_lcd(buff, 1);
 		//set_value("Char", 30);

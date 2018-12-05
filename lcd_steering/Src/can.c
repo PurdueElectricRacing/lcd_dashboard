@@ -15,6 +15,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 	rx.DLC = header.DLC;
 	rx.StdId = header.StdId;
 	xQueueSendFromISR(lcd.q_rx_can, &rx, 0);
+	HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
 }
 
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
@@ -55,16 +56,16 @@ void task_txCan() {
 	}
 }
 
-void can_filter_init() {
+void can_filter_init(CAN_HandleTypeDef* hcan) {
 	CAN_FilterTypeDef FilterConf;
 	FilterConf.FilterIdHigh =         BMS_MSG_ID << 5;
 	FilterConf.FilterIdLow =          MAIN_FAULT_ID << 5;
-	FilterConf.FilterMaskIdHigh =     0x7ff;       // 3
-	FilterConf.FilterMaskIdLow =      0x7ff;       // 1
+	FilterConf.FilterMaskIdHigh =     0;       // 3
+	FilterConf.FilterMaskIdLow =      0;       // 1
 	FilterConf.FilterFIFOAssignment = CAN_FilterFIFO0;
 	FilterConf.FilterBank = 0;
 	FilterConf.FilterMode = CAN_FILTERMODE_IDLIST;
 	FilterConf.FilterScale = CAN_FILTERSCALE_16BIT;
 	FilterConf.FilterActivation = ENABLE;
-	HAL_CAN_ConfigFilter(lcd.can, &FilterConf);
+	HAL_CAN_ConfigFilter(hcan, &FilterConf);
 }
