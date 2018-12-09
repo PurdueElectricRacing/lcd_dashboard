@@ -1,9 +1,15 @@
-/*
- * can.h
- *
- *  Created on: Dec 2, 2018
- *      Author: Matt Flanagan
- */
+/***************************************************************************
+*
+*     File Information
+*
+*     Name of File: lcd.c
+*
+*     Authors (Include Email):
+*       1. Matthew Flanagan       matthewdavidflanagan@outlook.com
+*
+*     File Description: This manages all of the can being sent for the dashboard
+*
+***************************************************************************/
 
 #ifndef CAN_H_
 #define CAN_H_

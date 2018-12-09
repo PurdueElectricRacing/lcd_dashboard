@@ -1,9 +1,18 @@
-/*
- * nextion_hardware.h
- *
- *  Created on: Dec 4, 2018
- *      Author: Matt Flanagan
- */
+/***************************************************************************
+*
+*     File Information
+*
+*     Name of File: lcd.c
+*
+*     Authors (Include Email):
+*       1. Matthew Flanagan       matthewdavidflanagan@outlook.com
+*
+*     File dependents: (header files, flow charts, referenced documentation)
+*
+*     File Description: This is the nextion abstraction file. That makes the 
+*     logic for interacting with the Nextion display easy.
+*
+***************************************************************************/
 
 #ifndef NEXTION_HARDWARE_H_
 #define NEXTION_HARDWARE_H_

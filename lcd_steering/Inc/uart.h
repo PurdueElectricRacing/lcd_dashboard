@@ -1,10 +1,18 @@
-/*
- * uart.h
- *
- *  Created on: Dec 2, 2018
- *      Author: Matt Flanagan
- */
-
+/***************************************************************************
+*
+*     File Information
+*
+*     Name of File: lcd.c
+*
+*     Authors (Include Email):
+*       1. Matthew Flanagan       matthewdavidflanagan@outlook.com
+*
+*     File dependents: (header files, flow charts, referenced documentation)
+*
+*     File Description: All the constants required for UART peripheral on the 
+*     dashboard.
+*
+***************************************************************************/
 #ifndef UART_H_
 #define UART_H_
 #include "lcd.h"
@@ -15,14 +23,14 @@
 
 typedef struct
 {
-	uint8_t* rx_buffer;
-	uint16_t rx_size;
+  uint8_t* rx_buffer;
+  uint16_t rx_size;
 }uart_rx_t;
 
 typedef struct
 {
-	uint8_t* tx_buffer;
-	uint16_t tx_size;
+  uint8_t* tx_buffer;
+  uint16_t tx_size;
 }uart_tx_t;
 
 
