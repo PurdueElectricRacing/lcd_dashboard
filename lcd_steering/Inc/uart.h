@@ -13,12 +13,14 @@
 #define RX_SIZE_UART 7
 #define DELAY_UART	 10 / portTICK_RATE_MS
 
-typedef struct {
+typedef struct
+{
 	uint8_t* rx_buffer;
 	uint16_t rx_size;
 }uart_rx_t;
 
-typedef struct {
+typedef struct
+{
 	uint8_t* tx_buffer;
 	uint16_t tx_size;
 }uart_tx_t;

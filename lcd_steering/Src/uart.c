@@ -6,7 +6,8 @@
  */
 #include "uart.h"
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart) {
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
+{
 	uart_rx_t rx;
 	rx.rx_size = RX_SIZE_UART;
 	rx.rx_buffer = malloc(sizeof(*rx.rx_buffer) * RX_SIZE_UART);
@@ -14,11 +15,13 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart) {
 	xQueueSendToBackFromISR(lcd.q_rx_uart, &rx, 0);
 }
 
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart)
+{
 	//do nothing and exit
 }
 
-void task_txUart() {
+void task_txUart()
+{
 	uart_tx_t tx;
 	TickType_t time_init = 0;
 	TickType_t time_to_wait = 0;
@@ -31,6 +34,8 @@ void task_txUart() {
 			{
 				xQueueReceive(lcd.q_tx_uart, &tx, TIMEOUT);  //actually take item out of queue
 				temp_pt = tx.tx_buffer;
+
+				//send the message
 				HAL_UART_Transmit_IT(lcd.uart, tx.tx_buffer, tx.tx_size);
 				HAL_Delay(DELAY_UART * 5);
 				free(temp_pt);
@@ -42,14 +47,18 @@ void task_txUart() {
 	}
 }
 
-void update_lcd(uint8_t* buffer, uint8_t size) {
+void update_lcd(uint8_t* buffer, uint8_t size)
+{
 	uart_tx_t tx;
 	tx.tx_size = size;
 	tx.tx_buffer = buffer;
-	while(uxQueueMessagesWaiting(lcd.q_tx_uart) == TX_UART_QUEUE_SIZE) {
+
+	while(uxQueueMessagesWaiting(lcd.q_tx_uart) == TX_UART_QUEUE_SIZE)
+	{
 		vTaskDelay(WAIT_QUEUE_FULL); //wait till space opens up
 	}
-	if (xQueueSendToBack(lcd.q_tx_uart, &tx, TIMEOUT) != pdTRUE) {
+	if (xQueueSendToBack(lcd.q_tx_uart, &tx, TIMEOUT) != pdTRUE)
+	{
 		//should never get here
 		free(buffer);
 		error_blink();

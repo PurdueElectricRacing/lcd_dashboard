@@ -28,12 +28,14 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 	xQueueSendFromISR(lcd.q_rx_can, &rx, 0);
 }
 
-void task_txCan() {
+void task_txCan()
+{
 	CanTxMsgTypeDef tx;
 	TickType_t time_init = 0;
 	TickType_t time_to_wait = 0;
 	TickType_t time_fin = 0;
-	while (1) {
+	while (1)
+	{
 			time_init = xTaskGetTickCount();
 		//check if this task is triggered
 			if (xQueuePeek(lcd.q_tx_can, &tx, TIMEOUT) == pdTRUE)
@@ -46,6 +48,8 @@ void task_txCan() {
 				header.StdId = tx.StdId;
 				header.TransmitGlobalTime = DISABLE;
 				uint32_t mailbox;
+
+				//send the message
 				while (!HAL_CAN_GetTxMailboxesFreeLevel(lcd.can)); // while mailboxes not free
 				HAL_CAN_AddTxMessage(lcd.can, &header, tx.Data, &mailbox);
 			}
@@ -56,7 +60,8 @@ void task_txCan() {
 	}
 }
 
-void can_filter_init(CAN_HandleTypeDef* hcan) {
+void can_filter_init(CAN_HandleTypeDef* hcan)
+{
 	CAN_FilterTypeDef FilterConf;
 	FilterConf.FilterIdHigh =         BMS_MSG_ID << 5;
 	FilterConf.FilterIdLow =          MAIN_FAULT_ID << 5;
