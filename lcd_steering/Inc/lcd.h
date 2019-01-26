@@ -47,7 +47,7 @@
 #define LCD_UPDATE_RATE		  1	 //pick a rate that makes 6b1 ~1hz used currently message is sent at 100hz
 //Can Message Constants
 #define BMS_MSG_ID			    0x6B1
-//#define BMS_FAULT_ID
+#define MAIN_ACK_ID				0x360
 //#define MC_FAULT_ID
 #define MAIN_FAULT_ID		    0x200
 

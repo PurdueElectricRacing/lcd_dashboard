@@ -140,11 +140,11 @@ void set_bco(char* obj_name, uint16_t val)
 
 void set_page(char* page_name) {
   char* result = malloc(sizeof(*result) * (strlen(page_name) + SET_PAGE_EXTRA + 1));
-  result = '\0';
+  result[0] = '\0';
   
   strcat(result, "page ");
   strcat(result, page_name);
   strcat(result, "\xFF\xFF\xFF");
 
-  update_lcd((uint*_t*) result, strlen(page_name) + SET_PAGE_EXTRA);
+  update_lcd((uint8_t*) result, strlen(page_name) + SET_PAGE_EXTRA);
 }

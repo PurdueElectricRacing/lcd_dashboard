@@ -155,10 +155,12 @@ void task_lcd_main()
 {
   lcd.can = &hcan1;
   lcd.uart = &huart1;
+  uint8_t page = 0; //0 = Start, 1 = Race, 2 = Race Mode
   bms_data_t bms;
   CanRxMsgTypeDef rx_can;
   uint16_t counter = 0;
   uint16_t counter_status = 0;
+  uint8_t main_fault_code = 0;
   TickType_t time_init = 0;
   TickType_t time_to_wait = 0;
   TickType_t time_fin = 0;
@@ -171,7 +173,7 @@ void task_lcd_main()
     HAL_UART_Receive_IT(&huart1, myrx_data, RX_SIZE_UART); //start the receive
     if (counter_status++ % 100 == 0)
     {
-      HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
+
     }
 
     //handle message requests from the LCD screen
@@ -186,6 +188,7 @@ void task_lcd_main()
         btn_handler(1);
       } else if (rx_uart.rx_buffer[1] == STOP_ID_0 && rx_uart.rx_buffer[2] == STOP_ID_1)
       {
+      	page = 0;
         btn_handler(1);
       } else if (rx_uart.rx_buffer[1] == ACTIVE_AERO_ID_0 && rx_uart.rx_buffer[2] == ACTIVE_AERO_ID_1)
       {
@@ -262,7 +265,20 @@ void task_lcd_main()
         {
             //display whatever main faults to the screen
             //TODO how to send
+        		if ((counter_status % 5) == 0 && page == 1) {
+        			main_fault_code = rx_can.Data[0];
+							char* message = malloc(sizeof(*message)*20);
+							sprintf(message, "Main Faults: %x ", main_fault_code & 0xff);
+							set_text("noti", message);
+        		}
             break;
+        }
+        case MAIN_ACK_ID:
+        {
+        	//start message accepted change state to ready to drive
+        	page = 1;
+        	set_page("Race");
+        	break;
         }
       }
     }
