@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2019 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -112,8 +112,11 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
+  HAL_Delay(DELAY_UART);
   MX_GPIO_Init();
+  HAL_Delay(DELAY_UART);
   MX_USART1_UART_Init();
+  HAL_Delay(DELAY_UART);
   MX_CAN1_Init();
   /* USER CODE BEGIN 2 */
   HAL_Delay(DELAY_UART);
@@ -305,10 +308,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, SUCCESS_Pin|STATUS_LED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, SUCCESS_Pin|STATUS_LED_Pin|ERROR_LED_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : SUCCESS_Pin STATUS_LED_Pin */
-  GPIO_InitStruct.Pin = SUCCESS_Pin|STATUS_LED_Pin;
+  /*Configure GPIO pins : SUCCESS_Pin STATUS_LED_Pin ERROR_LED_Pin */
+  GPIO_InitStruct.Pin = SUCCESS_Pin|STATUS_LED_Pin|ERROR_LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

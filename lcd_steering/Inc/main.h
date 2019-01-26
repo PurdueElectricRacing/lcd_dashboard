@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2019 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -63,6 +63,8 @@
 #define SUCCESS_GPIO_Port GPIOA
 #define STATUS_LED_Pin GPIO_PIN_2
 #define STATUS_LED_GPIO_Port GPIOA
+#define ERROR_LED_Pin GPIO_PIN_3
+#define ERROR_LED_GPIO_Port GPIOA
 
 /* ########################## Assert Selection ############################## */
 /**

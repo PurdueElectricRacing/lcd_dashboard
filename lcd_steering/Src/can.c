@@ -155,7 +155,7 @@ void can_filter_init(CAN_HandleTypeDef* hcan)
   CAN_FilterTypeDef FilterConf;
   FilterConf.FilterIdHigh =         BMS_MSG_ID << 5;
   FilterConf.FilterIdLow =          MAIN_FAULT_ID << 5;
-  FilterConf.FilterMaskIdHigh =     MAIN_ACK_ID;       // 3
+  FilterConf.FilterMaskIdHigh =     MAIN_ACK_ID << 5;       // 3
   FilterConf.FilterMaskIdLow =      0;       // 1
   FilterConf.FilterFIFOAssignment = CAN_FilterFIFO0;
   FilterConf.FilterBank = 0;

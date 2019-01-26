@@ -83,7 +83,7 @@ void error_blink()
 {
   while (1)
   {
-    HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
+    HAL_GPIO_TogglePin(ERROR_LED_GPIO_Port, ERROR_LED_Pin);
     HAL_Delay(1000);
   }
 }
@@ -173,7 +173,7 @@ void task_lcd_main()
     HAL_UART_Receive_IT(&huart1, myrx_data, RX_SIZE_UART); //start the receive
     if (counter_status++ % 100 == 0)
     {
-
+    	HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
     }
 
     //handle message requests from the LCD screen
