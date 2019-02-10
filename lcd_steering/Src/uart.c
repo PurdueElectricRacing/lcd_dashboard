@@ -95,8 +95,6 @@ void task_txUart()
 {
   uart_tx_t tx;
   TickType_t time_init = 0;
-  TickType_t time_to_wait = 0;
-  TickType_t time_fin = 0;
   uint8_t* temp_pt = NULL;
   while (1) {
     time_init = xTaskGetTickCount();
@@ -112,10 +110,8 @@ void task_txUart()
       HAL_Delay(DELAY_UART * 5);
       free(temp_pt);
     }
-    time_fin =  xTaskGetTickCount();
-    time_to_wait = (TX_UART_RATE + time_init) - time_fin;
-    time_to_wait = (TX_UART_RATE + time_init)  < time_fin ? 0: time_to_wait;
-    vTaskDelay(time_to_wait);
+
+    vTaskDelayUntil(time_init, TX_UART_RATE);
   }
 }
 

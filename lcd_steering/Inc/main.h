@@ -59,12 +59,27 @@
 
 /* Private define ------------------------------------------------------------*/
 
-#define SUCCESS_Pin GPIO_PIN_1
-#define SUCCESS_GPIO_Port GPIOA
-#define STATUS_LED_Pin GPIO_PIN_2
-#define STATUS_LED_GPIO_Port GPIOA
-#define ERROR_LED_Pin GPIO_PIN_3
-#define ERROR_LED_GPIO_Port GPIOA
+#define LCD_TX_Pin GPIO_PIN_2
+#define LCD_TX_GPIO_Port GPIOA
+#define LCD_RX_Pin GPIO_PIN_3
+#define LCD_RX_GPIO_Port GPIOA
+#define SteerAngle_Pin GPIO_PIN_7
+#define SteerAngle_GPIO_Port GPIOA
+#define Strain_Ref_Pin GPIO_PIN_0
+#define Strain_Ref_GPIO_Port GPIOB
+#define SteerStrain_Pin GPIO_PIN_1
+#define SteerStrain_GPIO_Port GPIOB
+#define TRACTION_EN_Pin GPIO_PIN_15
+#define TRACTION_EN_GPIO_Port GPIOA
+#define TRACTION_EN_EXTI_IRQn EXTI15_10_IRQn
+#define START_Pin GPIO_PIN_3
+#define START_GPIO_Port GPIOB
+#define START_EXTI_IRQn EXTI3_IRQn
+#define BLANK_BUT_Pin GPIO_PIN_7
+#define BLANK_BUT_GPIO_Port GPIOB
+#define BLANK_BUT_EXTI_IRQn EXTI9_5_IRQn
+#define TRACTION_SIG_Pin GPIO_PIN_3
+#define TRACTION_SIG_GPIO_Port GPIOH
 
 /* ########################## Assert Selection ############################## */
 /**

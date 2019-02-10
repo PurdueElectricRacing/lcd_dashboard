@@ -101,8 +101,6 @@ void task_txCan()
 {
   CanTxMsgTypeDef tx;
   TickType_t time_init = 0;
-  TickType_t time_to_wait = 0;
-  TickType_t time_fin = 0;
   while (1)
   {
     time_init = xTaskGetTickCount();
@@ -117,15 +115,12 @@ void task_txCan()
       header.StdId = tx.StdId;
       header.TransmitGlobalTime = DISABLE;
       uint32_t mailbox;
-      HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
+      //HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
       //send the message
       while (!HAL_CAN_GetTxMailboxesFreeLevel(lcd.can)); // while mailboxes not free
       HAL_CAN_AddTxMessage(lcd.can, &header, tx.Data, &mailbox);
     }
-    time_fin =  xTaskGetTickCount();
-    time_to_wait = (TX_CAN_RATE + time_init) - time_fin;
-    time_to_wait = (TX_CAN_RATE + time_init)  < time_fin ? 0: time_to_wait;
-    vTaskDelay(time_to_wait);
+    vTaskDelayUntil(&time_init, TX_CAN_RATE);
   }
 }
 

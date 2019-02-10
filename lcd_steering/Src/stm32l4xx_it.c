@@ -37,12 +37,14 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN 0 */
-#include "uart.h"
+#include "lcd.h"
+TickType_t START_LastPressedTime=0;
+TickType_t TRAC_LastPressedTime=0;
+TickType_t BTN3_LastPressedTime=0;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
 extern CAN_HandleTypeDef hcan1;
-extern UART_HandleTypeDef huart1;
 
 extern TIM_HandleTypeDef htim1;
 
@@ -170,6 +172,34 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
+* @brief This function handles EXTI line3 interrupt.
+*/
+void EXTI3_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI3_IRQn 0 */
+	//START BUTTON
+	BaseType_t xHigherPriorityTaskWoken;
+	if (xTaskGetTickCountFromISR() - BTN3_LastPressedTime > 500)
+	{
+		CanTxMsgTypeDef msg;
+		msg.IDE = CAN_ID_STD;
+		msg.RTR = CAN_RTR_DATA;
+		msg.DLC = 1;
+		msg.StdId = START_MSG_ID;
+		msg.Data[0] = 1;
+
+		xQueueSendToBackFromISR(lcd.q_tx_can, &msg, &xHigherPriorityTaskWoken);
+		BTN3_LastPressedTime = xTaskGetTickCountFromISR();
+	}
+
+  /* USER CODE END EXTI3_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
+  /* USER CODE BEGIN EXTI3_IRQn 1 */
+
+  /* USER CODE END EXTI3_IRQn 1 */
+}
+
+/**
 * @brief This function handles CAN1 TX interrupt.
 */
 void CAN1_TX_IRQHandler(void)
@@ -212,6 +242,33 @@ void CAN1_RX1_IRQHandler(void)
 }
 
 /**
+* @brief This function handles EXTI line[9:5] interrupts.
+*/
+void EXTI9_5_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI9_5_IRQn 0 */
+	//TRACTION CONTROL TOGGLE BUTTON
+	BaseType_t xHigherPriorityTaskWoken;
+	if (xTaskGetTickCountFromISR() - BTN3_LastPressedTime > 500)
+	{
+		CanTxMsgTypeDef msg;
+		msg.IDE = CAN_ID_STD;
+		msg.RTR = CAN_RTR_DATA;
+		msg.DLC = 1;
+		msg.StdId = START_MSG_ID;
+		msg.Data[0] = 2;	//number for traction control toggle
+
+		xQueueSendToBackFromISR(lcd.q_tx_can, &msg, &xHigherPriorityTaskWoken);
+		BTN3_LastPressedTime = xTaskGetTickCountFromISR();
+	}
+  /* USER CODE END EXTI9_5_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_7);
+  /* USER CODE BEGIN EXTI9_5_IRQn 1 */
+
+  /* USER CODE END EXTI9_5_IRQn 1 */
+}
+
+/**
 * @brief This function handles TIM1 update interrupt and TIM16 global interrupt.
 */
 void TIM1_UP_TIM16_IRQHandler(void)
@@ -226,17 +283,21 @@ void TIM1_UP_TIM16_IRQHandler(void)
 }
 
 /**
-* @brief This function handles USART1 global interrupt.
+* @brief This function handles EXTI line[15:10] interrupts.
 */
-void USART1_IRQHandler(void)
+void EXTI15_10_IRQHandler(void)
 {
-  /* USER CODE BEGIN USART1_IRQn 0 */
+  /* USER CODE BEGIN EXTI15_10_IRQn 0 */
+	//TRACTION CONTROL TOGGLE BUTTON
+	if (xTaskGetTickCountFromISR() - BTN3_LastPressedTime > 500)
+	{
+		//do nothing
+	}
+  /* USER CODE END EXTI15_10_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_15);
+  /* USER CODE BEGIN EXTI15_10_IRQn 1 */
 
-  /* USER CODE END USART1_IRQn 0 */
-  HAL_UART_IRQHandler(&huart1);
-  /* USER CODE BEGIN USART1_IRQn 1 */
-
-  /* USER CODE END USART1_IRQn 1 */
+  /* USER CODE END EXTI15_10_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
