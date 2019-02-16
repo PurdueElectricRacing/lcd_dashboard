@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2019 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -59,10 +59,27 @@
 
 /* Private define ------------------------------------------------------------*/
 
-#define SUCCESS_Pin GPIO_PIN_1
-#define SUCCESS_GPIO_Port GPIOA
-#define STATUS_LED_Pin GPIO_PIN_2
-#define STATUS_LED_GPIO_Port GPIOA
+#define LCD_TX_Pin GPIO_PIN_2
+#define LCD_TX_GPIO_Port GPIOA
+#define LCD_RX_Pin GPIO_PIN_3
+#define LCD_RX_GPIO_Port GPIOA
+#define SteerAngle_Pin GPIO_PIN_7
+#define SteerAngle_GPIO_Port GPIOA
+#define Strain_Ref_Pin GPIO_PIN_0
+#define Strain_Ref_GPIO_Port GPIOB
+#define SteerStrain_Pin GPIO_PIN_1
+#define SteerStrain_GPIO_Port GPIOB
+#define START_Pin GPIO_PIN_3
+#define START_GPIO_Port GPIOB
+#define START_EXTI_IRQn EXTI3_IRQn
+#define TRACTION_EN_Pin GPIO_PIN_5
+#define TRACTION_EN_GPIO_Port GPIOB
+#define TRACTION_EN_EXTI_IRQn EXTI9_5_IRQn
+#define TRACTION_LED_Pin GPIO_PIN_6
+#define TRACTION_LED_GPIO_Port GPIOB
+#define BLANK_BUT_Pin GPIO_PIN_7
+#define BLANK_BUT_GPIO_Port GPIOB
+#define BLANK_BUT_EXTI_IRQn EXTI9_5_IRQn
 
 /* ########################## Assert Selection ############################## */
 /**

@@ -22,6 +22,7 @@
 #define SET_VALUE_EXTRA 	13
 #define SET_BCO_EXTRA 		13
 #define SET_TEXT_EXTRA 		10
+#define SET_PAGE_EXTRA      8
 #define ASCII_OFFSET 		48
 
 #define RED					63488
@@ -31,5 +32,6 @@
 void set_value(char* str, uint16_t val);
 void set_text(char* obj_name, char* value);
 void set_bco(char* obj_name, uint16_t val);
+void set_page(char* page_name);
 
 #endif /* NEXTION_HARDWARE_H_ */

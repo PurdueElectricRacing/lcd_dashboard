@@ -44,7 +44,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   rx.DLC = header.DLC;
   rx.StdId = header.StdId;
   xQueueSendFromISR(lcd.q_rx_can, &rx, 0);
-  HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
+//  HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
 }
 
 /***************************************************************************
@@ -101,8 +101,6 @@ void task_txCan()
 {
   CanTxMsgTypeDef tx;
   TickType_t time_init = 0;
-  TickType_t time_to_wait = 0;
-  TickType_t time_fin = 0;
   while (1)
   {
     time_init = xTaskGetTickCount();
@@ -117,15 +115,12 @@ void task_txCan()
       header.StdId = tx.StdId;
       header.TransmitGlobalTime = DISABLE;
       uint32_t mailbox;
-
+      //HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
       //send the message
       while (!HAL_CAN_GetTxMailboxesFreeLevel(lcd.can)); // while mailboxes not free
       HAL_CAN_AddTxMessage(lcd.can, &header, tx.Data, &mailbox);
     }
-    time_fin =  xTaskGetTickCount();
-    time_to_wait = (TX_CAN_RATE + time_init) - time_fin;
-    time_to_wait = (TX_CAN_RATE + time_init)  < time_fin ? 0: time_to_wait;
-    vTaskDelay(time_to_wait);
+    vTaskDelayUntil(&time_init, TX_CAN_RATE);
   }
 }
 
@@ -155,7 +150,7 @@ void can_filter_init(CAN_HandleTypeDef* hcan)
   CAN_FilterTypeDef FilterConf;
   FilterConf.FilterIdHigh =         BMS_MSG_ID << 5;
   FilterConf.FilterIdLow =          MAIN_FAULT_ID << 5;
-  FilterConf.FilterMaskIdHigh =     0;       // 3
+  FilterConf.FilterMaskIdHigh =     MAIN_ACK_ID << 5;       // 3
   FilterConf.FilterMaskIdLow =      0;       // 1
   FilterConf.FilterFIFOAssignment = CAN_FilterFIFO0;
   FilterConf.FilterBank = 0;

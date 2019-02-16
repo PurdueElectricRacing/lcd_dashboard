@@ -46,15 +46,8 @@ int btn_handler(uint8_t btn)
   msg.IDE = CAN_ID_STD;
   msg.RTR = CAN_RTR_DATA;
   msg.DLC = 1;
-  msg.StdId = 0x350;
+  msg.StdId = START_MSG_ID;
   msg.Data[0] = btn;
-  msg.Data[1] = 0;
-  msg.Data[2] = 0;
-  msg.Data[3] = 0;
-  msg.Data[4] = 0;
-  msg.Data[5] = 0;
-  msg.Data[6] = 0;
-  msg.Data[7] = 0;
 
   xQueueSendToBack(lcd.q_tx_can, &msg, 100);
   return 0;
@@ -83,7 +76,7 @@ void error_blink()
 {
   while (1)
   {
-    HAL_GPIO_TogglePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
+    //HAL_GPIO_TogglePin(ERROR_LED_GPIO_Port, ERROR_LED_Pin);
     HAL_Delay(1000);
   }
 }
@@ -129,6 +122,10 @@ void initRTOSObjects(void)
   {
       error_blink();
   }
+  if (xTaskCreate(taskPollSteer, "Steer Sensor Task", STEER_STACK_SIZE, NULL, STEER_PRIORITY, NULL) != pdPASS)
+  {
+  		error_blink();
+  }
 }
 
 /***************************************************************************
@@ -154,24 +151,25 @@ void initRTOSObjects(void)
 void task_lcd_main()
 {
   lcd.can = &hcan1;
-  lcd.uart = &huart1;
+  lcd.uart = &huart2;
+  uint8_t page = 0; //0 = Start, 1 = Race, 2 = Race Mode
   bms_data_t bms;
   CanRxMsgTypeDef rx_can;
   uint16_t counter = 0;
   uint16_t counter_status = 0;
+  uint8_t main_fault_code = 0;
   TickType_t time_init = 0;
-  TickType_t time_to_wait = 0;
-  TickType_t time_fin = 0;
   uart_rx_t rx_uart;
 
   while (1) 
   {
     time_init = xTaskGetTickCount(); // get the initial time of the task
 
-    HAL_UART_Receive_IT(&huart1, myrx_data, RX_SIZE_UART); //start the receive
+    HAL_UART_Receive_IT(lcd.uart, myrx_data, RX_SIZE_UART); //start the receive
     if (counter_status++ % 100 == 0)
     {
-      HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
+    	//btn_handler(1);
+    	HAL_GPIO_TogglePin(TRACTION_LED_GPIO_Port, TRACTION_LED_Pin);
     }
 
     //handle message requests from the LCD screen
@@ -186,6 +184,7 @@ void task_lcd_main()
         btn_handler(1);
       } else if (rx_uart.rx_buffer[1] == STOP_ID_0 && rx_uart.rx_buffer[2] == STOP_ID_1)
       {
+      	page = 0;
         btn_handler(1);
       } else if (rx_uart.rx_buffer[1] == ACTIVE_AERO_ID_0 && rx_uart.rx_buffer[2] == ACTIVE_AERO_ID_1)
       {
@@ -262,16 +261,25 @@ void task_lcd_main()
         {
             //display whatever main faults to the screen
             //TODO how to send
+        		if ((counter_status % 5) == 0 && page == 1) {
+        			main_fault_code = rx_can.Data[0];
+							char* message = malloc(sizeof(*message)*20);
+							sprintf(message, "Main Faults: %x ", main_fault_code & 0xff);
+							set_text("noti", message);
+        		}
             break;
+        }
+        case MAIN_ACK_ID:
+        {
+        	//start message accepted change state to ready to drive
+        	page = 1;
+        	set_page("Race");
+        	break;
         }
       }
     }
 
-    //implements vTaskDelayUntil() because i suck
-    time_fin =  xTaskGetTickCount();
-    time_to_wait = (LCD_MAIN_RATE + time_init) - time_fin;
-    time_to_wait = (LCD_MAIN_RATE + time_init)  < time_fin ? 0: time_to_wait;
-    vTaskDelay(time_to_wait);
+    vTaskDelayUntil(&time_init, LCD_MAIN_RATE);
   }
 }
 

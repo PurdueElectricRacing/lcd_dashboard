@@ -21,10 +21,12 @@
 #include "stm32l4xx_hal.h"
 #include "stm32l4xx_hal_can.h"
 #include "stm32l4xx_hal_uart.h"
+#include "stm32l4xx_hal_adc.h"
 #include "cmsis_os.h"
 #include "main.h"
 #include "uart.h"
 #include "can.h"
+#include "steer.h"
 #include "nextion_hardware.h"
 #include "task.h"
 #include <string.h>
@@ -46,8 +48,10 @@
 #define SPORT_MODE_ID_1	  	0x04
 #define LCD_UPDATE_RATE		  1	 //pick a rate that makes 6b1 ~1hz used currently message is sent at 100hz
 //Can Message Constants
+#define START_MSG_ID				0x350
 #define BMS_MSG_ID			    0x6B1
-//#define BMS_FAULT_ID
+#define MAIN_ACK_ID					0x360
+#define STEER_SENSE_ID			0x7C0
 //#define MC_FAULT_ID
 #define MAIN_FAULT_ID		    0x200
 
@@ -58,19 +62,25 @@
 #define TX_UART_QUEUE_SIZE 	10
 
 //Stack Constants
-#define LCD_MAIN_STACK_SIZE 128
-#define TX_CAN_STACK_SIZE	  128
-#define TX_UART_STACK_SIZE	64
+#define LCD_MAIN_STACK_SIZE 256
+#define TX_CAN_STACK_SIZE	  256
+#define TX_UART_STACK_SIZE	256
+#define STEER_STACK_SIZE		256
 
 //Priority Constatns
 #define LCD_MAIN_PRIORTIY 	1
 #define TX_CAN_PRIORITY		  1
 #define TX_UART_PRIORITY  	1
+#define STEER_PRIORITY			1
 
 //Rates
 #define LCD_MAIN_RATE 		  10 / portTICK_RATE_MS
 #define TX_CAN_RATE			    10 / portTICK_RATE_MS
 #define TX_UART_RATE		    10 / portTICK_RATE_MS
+#define STEER_RATE					20 / portTICK_RATE_MS
+
+//Delays
+#define DELAY_STARTUP				500 / portTICK_RATE_MS
 
 //Timeouts
 #define TIMEOUT				      5 / portTICK_RATE_MS
@@ -112,6 +122,7 @@ void initRTOSObjects(void);
 lcd_t lcd;
 
 extern CAN_HandleTypeDef 	hcan1;
-extern UART_HandleTypeDef 	huart1;
+extern UART_HandleTypeDef 	huart2;
+extern ADC_HandleTypeDef hadc1;
 
 #endif /* LCD_H_ */
