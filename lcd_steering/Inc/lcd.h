@@ -62,10 +62,10 @@
 #define TX_UART_QUEUE_SIZE 	10
 
 //Stack Constants
-#define LCD_MAIN_STACK_SIZE 128
-#define TX_CAN_STACK_SIZE	  128
-#define TX_UART_STACK_SIZE	64
-#define STEER_STACK_SIZE		128
+#define LCD_MAIN_STACK_SIZE 256
+#define TX_CAN_STACK_SIZE	  256
+#define TX_UART_STACK_SIZE	256
+#define STEER_STACK_SIZE		256
 
 //Priority Constatns
 #define LCD_MAIN_PRIORTIY 	1

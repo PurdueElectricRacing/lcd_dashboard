@@ -69,17 +69,17 @@
 #define Strain_Ref_GPIO_Port GPIOB
 #define SteerStrain_Pin GPIO_PIN_1
 #define SteerStrain_GPIO_Port GPIOB
-#define TRACTION_EN_Pin GPIO_PIN_15
-#define TRACTION_EN_GPIO_Port GPIOA
-#define TRACTION_EN_EXTI_IRQn EXTI15_10_IRQn
 #define START_Pin GPIO_PIN_3
 #define START_GPIO_Port GPIOB
 #define START_EXTI_IRQn EXTI3_IRQn
+#define TRACTION_EN_Pin GPIO_PIN_5
+#define TRACTION_EN_GPIO_Port GPIOB
+#define TRACTION_EN_EXTI_IRQn EXTI9_5_IRQn
+#define TRACTION_LED_Pin GPIO_PIN_6
+#define TRACTION_LED_GPIO_Port GPIOB
 #define BLANK_BUT_Pin GPIO_PIN_7
 #define BLANK_BUT_GPIO_Port GPIOB
 #define BLANK_BUT_EXTI_IRQn EXTI9_5_IRQn
-#define TRACTION_SIG_Pin GPIO_PIN_3
-#define TRACTION_SIG_GPIO_Port GPIOH
 
 /* ########################## Assert Selection ############################## */
 /**
