@@ -1,3 +1,4 @@
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file           : main.h
@@ -46,32 +47,60 @@
   *
   ******************************************************************************
   */
+/* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __MAIN_H__
-#define __MAIN_H__
+#ifndef __MAIN_H
+#define __MAIN_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Includes ------------------------------------------------------------------*/
+#include "stm32l4xx_hal.h"
 
+/* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "lcd.h"
 /* USER CODE END Includes */
 
-/* Private define ------------------------------------------------------------*/
+/* Exported types ------------------------------------------------------------*/
+/* USER CODE BEGIN ET */
 
+/* USER CODE END ET */
+
+/* Exported constants --------------------------------------------------------*/
+/* USER CODE BEGIN EC */
+
+/* USER CODE END EC */
+
+/* Exported macro ------------------------------------------------------------*/
+/* USER CODE BEGIN EM */
+
+/* USER CODE END EM */
+
+/* Exported functions prototypes ---------------------------------------------*/
+void Error_Handler(void);
+
+/* USER CODE BEGIN EFP */
+
+/* USER CODE END EFP */
+
+/* Private defines -----------------------------------------------------------*/
 #define LCD_TX_Pin GPIO_PIN_2
 #define LCD_TX_GPIO_Port GPIOA
 #define LCD_RX_Pin GPIO_PIN_3
 #define LCD_RX_GPIO_Port GPIOA
+#define START_Pin GPIO_PIN_4
+#define START_GPIO_Port GPIOA
+#define START_EXTI_IRQn EXTI4_IRQn
 #define SteerAngle_Pin GPIO_PIN_7
 #define SteerAngle_GPIO_Port GPIOA
 #define Strain_Ref_Pin GPIO_PIN_0
 #define Strain_Ref_GPIO_Port GPIOB
 #define SteerStrain_Pin GPIO_PIN_1
 #define SteerStrain_GPIO_Port GPIOB
-#define START_Pin GPIO_PIN_3
-#define START_GPIO_Port GPIOB
-#define START_EXTI_IRQn EXTI3_IRQn
 #define TRACTION_EN_Pin GPIO_PIN_5
 #define TRACTION_EN_GPIO_Port GPIOB
 #define TRACTION_EN_EXTI_IRQn EXTI9_5_IRQn
@@ -80,28 +109,14 @@
 #define BLANK_BUT_Pin GPIO_PIN_7
 #define BLANK_BUT_GPIO_Port GPIOB
 #define BLANK_BUT_EXTI_IRQn EXTI9_5_IRQn
-
-/* ########################## Assert Selection ############################## */
-/**
-  * @brief Uncomment the line below to expanse the "assert_param" macro in the 
-  *        HAL drivers code
-  */
-/* #define USE_FULL_ASSERT    1U */
-
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
- extern "C" {
-#endif
-void _Error_Handler(char *, int);
-
-#define Error_Handler() _Error_Handler(__FILE__, __LINE__)
-#ifdef __cplusplus
 }
 #endif
 
-#endif /* __MAIN_H__ */
+#endif /* __MAIN_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
