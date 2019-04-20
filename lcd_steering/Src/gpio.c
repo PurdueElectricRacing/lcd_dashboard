@@ -1,26 +1,8 @@
-/***************************************************************************
-*
-*     File Information
-*
-*     Name of File: lcd.c
-*
-*     Authors (Include Email):
-*       1. Matthew Flanagan       matthewdavidflanagan@outlook.com
-*
-*     File Description: This manages all of the can being sent for the dashboard
-*
-***************************************************************************/
-
-#ifndef CAN_USR_H_
-#define CAN_USR_H_
-
-#include "lcd.h"
-
 /**
   ******************************************************************************
-  * File Name          : CAN.h
+  * File Name          : gpio.c
   * Description        : This file provides code for the configuration
-  *                      of the CAN instances.
+  *                      of all used GPIO pins.
   ******************************************************************************
   * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -64,43 +46,70 @@
   *
   ******************************************************************************
   */
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __can_H
-#define __can_H
-#ifdef __cplusplus
- extern "C" {
-#endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "gpio.h"
+/* USER CODE BEGIN 0 */
 
-/* USER CODE BEGIN Includes */
+/* USER CODE END 0 */
 
-/* USER CODE END Includes */
+/*----------------------------------------------------------------------------*/
+/* Configure GPIO                                                             */
+/*----------------------------------------------------------------------------*/
+/* USER CODE BEGIN 1 */
 
-extern CAN_HandleTypeDef hcan1;
+/* USER CODE END 1 */
 
-/* USER CODE BEGIN Private defines */
+/** Configure pins as 
+        * Analog 
+        * Input 
+        * Output
+        * EVENT_OUT
+        * EXTI
+*/
+void MX_GPIO_Init(void)
+{
 
-/* USER CODE END Private defines */
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-void MX_CAN1_Init(void);
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
-/* USER CODE BEGIN Prototypes */
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(TRACTION_LED_GPIO_Port, TRACTION_LED_Pin, GPIO_PIN_RESET);
 
-/* USER CODE END Prototypes */
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = START_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(START_GPIO_Port, &GPIO_InitStruct);
 
-#ifdef __cplusplus
+  /*Configure GPIO pins : PBPin PBPin */
+  GPIO_InitStruct.Pin = TRACTION_EN_Pin|BLANK_BUT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = TRACTION_LED_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(TRACTION_LED_GPIO_Port, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
 }
-#endif
-#endif /*__ can_H */
 
-/**
-  * @}
-  */
+/* USER CODE BEGIN 2 */
 
-/**
-  * @}
-  */
+/* USER CODE END 2 */
 
-#endif /* CAN_USR_H_ */
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

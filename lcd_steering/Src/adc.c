@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : CAN.c
+  * File Name          : ADC.c
   * Description        : This file provides code for the configuration
-  *                      of the CAN instances.
+  *                      of the ADC instances.
   ******************************************************************************
   * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -47,98 +47,122 @@
   ******************************************************************************
   */
 
-#include "can_usr.h"
+/* Includes ------------------------------------------------------------------*/
+#include "adc.h"
 
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
 
-CAN_HandleTypeDef hcan1;
+ADC_HandleTypeDef hadc1;
 
-/* CAN1 init function */
-void MX_CAN1_Init(void)
+/* ADC1 init function */
+void MX_ADC1_Init(void)
 {
+  ADC_ChannelConfTypeDef sConfig = {0};
 
-  hcan1.Instance = CAN1;
-  hcan1.Init.Prescaler = 4;
-  hcan1.Init.Mode = CAN_MODE_NORMAL;
-  hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan1.Init.TimeSeg1 = CAN_BS1_9TQ;
-  hcan1.Init.TimeSeg2 = CAN_BS2_6TQ;
-  hcan1.Init.TimeTriggeredMode = DISABLE;
-  hcan1.Init.AutoBusOff = ENABLE;
-  hcan1.Init.AutoWakeUp = DISABLE;
-  hcan1.Init.AutoRetransmission = DISABLE;
-  hcan1.Init.ReceiveFifoLocked = DISABLE;
-  hcan1.Init.TransmitFifoPriority = DISABLE;
-  if (HAL_CAN_Init(&hcan1) != HAL_OK)
+  /**Common config 
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV4;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.LowPowerAutoWait = DISABLE;
+  hadc1.Init.ContinuousConvMode = ENABLE;
+  hadc1.Init.NbrOfConversion = 2;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc1.Init.OversamplingMode = DISABLE;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /**Configure Regular Channel 
+  */
+  sConfig.Channel = ADC_CHANNEL_12;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_247CYCLES_5;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /**Configure Regular Channel 
+  */
+  sConfig.Channel = ADC_CHANNEL_16;
+  sConfig.Rank = ADC_REGULAR_RANK_2;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
   }
 
 }
 
-void HAL_CAN_MspInit(CAN_HandleTypeDef* canHandle)
+void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
 {
 
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-  if(canHandle->Instance==CAN1)
+  if(adcHandle->Instance==ADC1)
   {
-  /* USER CODE BEGIN CAN1_MspInit 0 */
+  /* USER CODE BEGIN ADC1_MspInit 0 */
 
-  /* USER CODE END CAN1_MspInit 0 */
-    /* CAN1 clock enable */
-    __HAL_RCC_CAN1_CLK_ENABLE();
+  /* USER CODE END ADC1_MspInit 0 */
+    /* ADC1 clock enable */
+    __HAL_RCC_ADC_CLK_ENABLE();
   
     __HAL_RCC_GPIOA_CLK_ENABLE();
-    /**CAN1 GPIO Configuration    
-    PA11     ------> CAN1_RX
-    PA12     ------> CAN1_TX 
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    /**ADC1 GPIO Configuration    
+    PA7     ------> ADC1_IN12
+    PB0     ------> ADC1_IN15
+    PB1     ------> ADC1_IN16 
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pin = SteerAngle_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF9_CAN1;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    HAL_GPIO_Init(SteerAngle_GPIO_Port, &GPIO_InitStruct);
 
-    /* CAN1 interrupt Init */
-    HAL_NVIC_SetPriority(CAN1_TX_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(CAN1_TX_IRQn);
-    HAL_NVIC_SetPriority(CAN1_RX0_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
-    HAL_NVIC_SetPriority(CAN1_RX1_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(CAN1_RX1_IRQn);
-  /* USER CODE BEGIN CAN1_MspInit 1 */
+    GPIO_InitStruct.Pin = Strain_Ref_Pin|SteerStrain_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /* USER CODE END CAN1_MspInit 1 */
+  /* USER CODE BEGIN ADC1_MspInit 1 */
+
+  /* USER CODE END ADC1_MspInit 1 */
   }
 }
 
-void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
+void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 {
 
-  if(canHandle->Instance==CAN1)
+  if(adcHandle->Instance==ADC1)
   {
-  /* USER CODE BEGIN CAN1_MspDeInit 0 */
+  /* USER CODE BEGIN ADC1_MspDeInit 0 */
 
-  /* USER CODE END CAN1_MspDeInit 0 */
+  /* USER CODE END ADC1_MspDeInit 0 */
     /* Peripheral clock disable */
-    __HAL_RCC_CAN1_CLK_DISABLE();
+    __HAL_RCC_ADC_CLK_DISABLE();
   
-    /**CAN1 GPIO Configuration    
-    PA11     ------> CAN1_RX
-    PA12     ------> CAN1_TX 
+    /**ADC1 GPIO Configuration    
+    PA7     ------> ADC1_IN12
+    PB0     ------> ADC1_IN15
+    PB1     ------> ADC1_IN16 
     */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_11|GPIO_PIN_12);
+    HAL_GPIO_DeInit(SteerAngle_GPIO_Port, SteerAngle_Pin);
 
-    /* CAN1 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(CAN1_TX_IRQn);
-    HAL_NVIC_DisableIRQ(CAN1_RX0_IRQn);
-    HAL_NVIC_DisableIRQ(CAN1_RX1_IRQn);
-  /* USER CODE BEGIN CAN1_MspDeInit 1 */
+    HAL_GPIO_DeInit(GPIOB, Strain_Ref_Pin|SteerStrain_Pin);
 
-  /* USER CODE END CAN1_MspDeInit 1 */
+  /* USER CODE BEGIN ADC1_MspDeInit 1 */
+
+  /* USER CODE END ADC1_MspDeInit 1 */
   }
 } 
 

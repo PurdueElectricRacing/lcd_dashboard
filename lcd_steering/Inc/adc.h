@@ -1,26 +1,8 @@
-/***************************************************************************
-*
-*     File Information
-*
-*     Name of File: lcd.c
-*
-*     Authors (Include Email):
-*       1. Matthew Flanagan       matthewdavidflanagan@outlook.com
-*
-*     File Description: This manages all of the can being sent for the dashboard
-*
-***************************************************************************/
-
-#ifndef CAN_USR_H_
-#define CAN_USR_H_
-
-#include "lcd.h"
-
 /**
   ******************************************************************************
-  * File Name          : CAN.h
+  * File Name          : ADC.h
   * Description        : This file provides code for the configuration
-  *                      of the CAN instances.
+  *                      of the ADC instances.
   ******************************************************************************
   * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -65,8 +47,8 @@
   ******************************************************************************
   */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __can_H
-#define __can_H
+#ifndef __adc_H
+#define __adc_H
 #ifdef __cplusplus
  extern "C" {
 #endif
@@ -78,13 +60,13 @@
 
 /* USER CODE END Includes */
 
-extern CAN_HandleTypeDef hcan1;
+extern ADC_HandleTypeDef hadc1;
 
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
-void MX_CAN1_Init(void);
+void MX_ADC1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
@@ -93,7 +75,7 @@ void MX_CAN1_Init(void);
 #ifdef __cplusplus
 }
 #endif
-#endif /*__ can_H */
+#endif /*__ adc_H */
 
 /**
   * @}
@@ -103,4 +85,4 @@ void MX_CAN1_Init(void);
   * @}
   */
 
-#endif /* CAN_USR_H_ */
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
