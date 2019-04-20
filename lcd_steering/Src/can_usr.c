@@ -1,149 +1,161 @@
-/**
-  ******************************************************************************
-  * File Name          : CAN.c
-  * Description        : This file provides code for the configuration
-  *                      of the CAN instances.
-  ******************************************************************************
-  * This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
-  *
-  * Copyright (c) 2019 STMicroelectronics International N.V. 
-  * All rights reserved.
-  *
-  * Redistribution and use in source and binary forms, with or without 
-  * modification, are permitted, provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code must retain the above copyright notice, 
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
-  *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-  */
+/***************************************************************************
+*
+*     File Information
+*
+*     Name of File: lcd.c
+*
+*     Authors (Include Email):
+*       1. Matthew Flanagan       matthewdavidflanagan@outlook.com
+*
+*     File dependents: (header files, flow charts, referenced documentation)
+*       1. can.h
+*
+*     File Description: This manages all of the can being sent for the dashboard
+*
+***************************************************************************/
 
 #include "can_usr.h"
 
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-
-CAN_HandleTypeDef hcan1;
-
-/* CAN1 init function */
-void MX_CAN1_Init(void)
+/***************************************************************************
+*
+*     Function Information
+*
+*     Name of Function: HAL_CAN_RxFifo0MsgPendingCallback
+*
+*     Programmer's Name: Matt Flanagan
+*
+*     Function Return Type: None
+*
+*     Parameters (list data type, name, and comment one per line):
+*       1. CAN_HandleTypeDef *hcan      Can Handle
+*
+*      Global Dependents:
+*       1. None
+*
+*     Function Description: After a message has been received add it to the
+*     rx can queue and move on with life.
+*
+***************************************************************************/
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-
-  hcan1.Instance = CAN1;
-  hcan1.Init.Prescaler = 4;
-  hcan1.Init.Mode = CAN_MODE_NORMAL;
-  hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan1.Init.TimeSeg1 = CAN_BS1_9TQ;
-  hcan1.Init.TimeSeg2 = CAN_BS2_6TQ;
-  hcan1.Init.TimeTriggeredMode = DISABLE;
-  hcan1.Init.AutoBusOff = ENABLE;
-  hcan1.Init.AutoWakeUp = DISABLE;
-  hcan1.Init.AutoRetransmission = DISABLE;
-  hcan1.Init.ReceiveFifoLocked = DISABLE;
-  hcan1.Init.TransmitFifoPriority = DISABLE;
-  if (HAL_CAN_Init(&hcan1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
+  CanRxMsgTypeDef rx;
+  CAN_RxHeaderTypeDef header;
+  HAL_CAN_GetRxMessage(hcan, 0, &header, rx.Data);
+  rx.DLC = header.DLC;
+  rx.StdId = header.StdId;
+  xQueueSendFromISR(lcd.q_rx_can, &rx, 0);
+//  HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
 }
 
-void HAL_CAN_MspInit(CAN_HandleTypeDef* canHandle)
+/***************************************************************************
+*
+*     Function Information
+*
+*     Name of Function: HAL_CAN_RxFifo1MsgPendingCallback
+*
+*     Programmer's Name: Matt Flanagan
+*
+*     Function Return Type: None
+*
+*     Parameters (list data type, name, and comment one per line):
+*       1. CAN_HandleTypeDef *hcan      Can Handle
+*
+*      Global Dependents:
+*       1. None
+*
+*     Function Description: After a message has been received add it to the
+*     rx can queue and move on with life.
+*
+***************************************************************************/
+void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
+  CanRxMsgTypeDef rx;
+  CAN_RxHeaderTypeDef header;
+  HAL_CAN_GetRxMessage(hcan, 0, &header, rx.Data);
+  rx.DLC = header.DLC;
+  rx.StdId = header.StdId;
+  xQueueSendFromISR(lcd.q_rx_can, &rx, 0);
+}
 
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  if(canHandle->Instance==CAN1)
+/***************************************************************************
+*
+*     Function Information
+*
+*     Name of Function: task_txCan
+*
+*     Programmer's Name: Matt Flanagan
+*
+*     Function Return Type: None
+*
+*     Parameters (list data type, name, and comment one per line):
+*       1. None
+*
+*      Global Dependents:
+*       1. Can queue and such
+*
+*     Function Description: Task that runs at TX_CAN_RATE and polls for can
+*     messages to arrive to send them out to the main module.
+*
+***************************************************************************/
+void task_txCan()
+{
+  CanTxMsgTypeDef tx;
+  TickType_t time_init = 0;
+  while (1)
   {
-  /* USER CODE BEGIN CAN1_MspInit 0 */
-
-  /* USER CODE END CAN1_MspInit 0 */
-    /* CAN1 clock enable */
-    __HAL_RCC_CAN1_CLK_ENABLE();
-  
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    /**CAN1 GPIO Configuration    
-    PA11     ------> CAN1_RX
-    PA12     ------> CAN1_TX 
-    */
-    GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF9_CAN1;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    /* CAN1 interrupt Init */
-    HAL_NVIC_SetPriority(CAN1_TX_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(CAN1_TX_IRQn);
-    HAL_NVIC_SetPriority(CAN1_RX0_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
-    HAL_NVIC_SetPriority(CAN1_RX1_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(CAN1_RX1_IRQn);
-  /* USER CODE BEGIN CAN1_MspInit 1 */
-
-  /* USER CODE END CAN1_MspInit 1 */
+    time_init = xTaskGetTickCount();
+//check if this task is triggered
+    if (xQueuePeek(lcd.q_tx_can, &tx, TIMEOUT) == pdTRUE)
+    {
+      xQueueReceive(lcd.q_tx_can, &tx, TIMEOUT);  //actually take item out of queue
+      CAN_TxHeaderTypeDef header;
+      header.DLC = tx.DLC;
+      header.IDE = tx.IDE;
+      header.RTR = tx.RTR;
+      header.StdId = tx.StdId;
+      header.TransmitGlobalTime = DISABLE;
+      uint32_t mailbox;
+      //HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
+      //send the message
+      while (!HAL_CAN_GetTxMailboxesFreeLevel(lcd.can)); // while mailboxes not free
+      HAL_CAN_AddTxMessage(lcd.can, &header, tx.Data, &mailbox);
+    }
+    vTaskDelayUntil(&time_init, TX_CAN_RATE);
   }
 }
 
-void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
+/***************************************************************************
+*
+*     Function Information
+*
+*     Name of Function: can_filter_init
+*
+*     Programmer's Name: Matt Flanagan
+*
+*     Function Return Type: None
+*
+*     Parameters (list data type, name, and comment one per line):
+*       1. CAN_HandleTypeDef* hcan        Can Handle
+*
+*      Global Dependents:
+*       1. None
+*
+*     Function Description: Sets the can filter to only take Messages from BMS
+*     and MAIN. Only uses FIFO0. If more messages need to be read change FilterMaskIdHigh
+*     and FilterMaskIdLow.
+*
+***************************************************************************/
+void can_filter_init(CAN_HandleTypeDef* hcan)
 {
-
-  if(canHandle->Instance==CAN1)
-  {
-  /* USER CODE BEGIN CAN1_MspDeInit 0 */
-
-  /* USER CODE END CAN1_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_CAN1_CLK_DISABLE();
-  
-    /**CAN1 GPIO Configuration    
-    PA11     ------> CAN1_RX
-    PA12     ------> CAN1_TX 
-    */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_11|GPIO_PIN_12);
-
-    /* CAN1 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(CAN1_TX_IRQn);
-    HAL_NVIC_DisableIRQ(CAN1_RX0_IRQn);
-    HAL_NVIC_DisableIRQ(CAN1_RX1_IRQn);
-  /* USER CODE BEGIN CAN1_MspDeInit 1 */
-
-  /* USER CODE END CAN1_MspDeInit 1 */
-  }
-} 
-
-/* USER CODE BEGIN 1 */
-
-/* USER CODE END 1 */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+  CAN_FilterTypeDef FilterConf;
+  FilterConf.FilterIdHigh =         BMS_MSG_ID << 5;
+  FilterConf.FilterIdLow =          MAIN_FAULT_ID << 5;
+  FilterConf.FilterMaskIdHigh =     MAIN_ACK_ID << 5;       // 3
+  FilterConf.FilterMaskIdLow =      0;       // 1
+  FilterConf.FilterFIFOAssignment = CAN_FilterFIFO0;
+  FilterConf.FilterBank = 0;
+  FilterConf.FilterMode = CAN_FILTERMODE_IDLIST;
+  FilterConf.FilterScale = CAN_FILTERSCALE_16BIT;
+  FilterConf.FilterActivation = ENABLE;
+  HAL_CAN_ConfigFilter(hcan, &FilterConf);
+}

@@ -47,20 +47,21 @@
   ******************************************************************************
   */
 /* Includes ------------------------------------------------------------------*/
-#include <can_usr.h>
 #include "main.h"
 #include "stm32l4xx_hal.h"
 #include "cmsis_os.h"
-#include "adc.h"
-#include "can.h"
-#include "usart.h"
-#include "gpio.h"
 
 /* USER CODE BEGIN Includes */
+#include "can_usr.h"
 #include "stm32l4xx_hal_uart.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+
+CAN_HandleTypeDef hcan1;
+
+UART_HandleTypeDef huart2;
 
 osThreadId defaultTaskHandle;
 
@@ -71,7 +72,12 @@ uint8_t myrx_data[RX_SIZE_UART];
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-void MX_FREERTOS_Init(void);
+static void MX_GPIO_Init(void);
+static void MX_CAN1_Init(void);
+static void MX_ADC1_Init(void);
+static void MX_USART2_UART_Init(void);
+void StartDefaultTask(void const * argument);
+
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
@@ -128,8 +134,31 @@ int main(void)
   initRTOSObjects(); //start tasks
   /* USER CODE END 2 */
 
-  /* Call init function for freertos objects (in freertos.c) */
-  MX_FREERTOS_Init();
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* Create the thread(s) */
+  /* definition and creation of defaultTask */
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+ 
 
   /* Start scheduler */
   osKernelStart();
@@ -368,6 +397,25 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void const * argument)
+{
+
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END 5 */ 
+}
 
 /**
   * @brief  Period elapsed callback in non blocking mode
