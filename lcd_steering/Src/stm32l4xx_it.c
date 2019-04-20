@@ -194,7 +194,7 @@ void EXTI4_IRQHandler(void)
 		msg.DLC = 1;
 		msg.StdId = START_MSG_ID;
 		msg.Data[0] = 1;	//number for traction control toggle
-		xQueueSendToBackFromISR(lcd.q_tx_can, &msg, &xHigherPriorityTaskWoken);
+//		xQueueSendToBackFromISR(lcd.q_tx_can, &msg, &xHigherPriorityTaskWoken);
 		START_LastPressedTime = xTaskGetTickCountFromISR();
 	}
   /* USER CODE END EXTI4_IRQn 0 */
@@ -263,7 +263,7 @@ void EXTI9_5_IRQHandler(void)
 		msg.StdId = START_MSG_ID;
 		msg.Data[0] = 2;	//number for traction control toggle
 		HAL_GPIO_TogglePin(TRACTION_LED_GPIO_Port, TRACTION_LED_Pin);
-		xQueueSendToBackFromISR(lcd.q_tx_can, &msg, &xHigherPriorityTaskWoken);
+//		xQueueSendToBackFromISR(lcd.q_tx_can, &msg, &xHigherPriorityTaskWoken);
 		BTN3_LastPressedTime = xTaskGetTickCountFromISR();
 	}
   /* USER CODE END EXTI9_5_IRQn 0 */

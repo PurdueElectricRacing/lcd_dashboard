@@ -118,10 +118,10 @@ void initRTOSObjects(void)
   {
       error_blink();
   }
-//  if (xTaskCreate(task_txUart, "TX Uart Task", TX_UART_STACK_SIZE, NULL, TX_UART_PRIORITY, NULL) != pdPASS)
-//  {
-//      error_blink();
-//  }
+  if (xTaskCreate(task_txUart, "TX Uart Task", TX_UART_STACK_SIZE, NULL, TX_UART_PRIORITY, NULL) != pdPASS)
+  {
+      error_blink();
+  }
   if (xTaskCreate(taskPollSteer, "Steer Sensor Task", STEER_STACK_SIZE, NULL, STEER_PRIORITY, NULL) != pdPASS)
   {
   		error_blink();
@@ -152,7 +152,7 @@ void task_lcd_main()
 {
   lcd.can = &hcan1;
   lcd.uart = &huart2;
-  uint8_t page = 0; //0 = Start, 1 = Race, 2 = Race Mode
+  page_t page = START;
   bms_data_t bms;
   CanRxMsgTypeDef rx_can;
   uint16_t counter = 0;
@@ -160,16 +160,17 @@ void task_lcd_main()
   uint8_t main_fault_code = 0;
   TickType_t time_init = 0;
   uart_rx_t rx_uart;
+  uart_tx_t tx_uart;
+  HAL_UART_Receive_IT(lcd.uart, myrx_data, RX_SIZE_UART); //start the receive
 
   while (1) 
   {
     time_init = xTaskGetTickCount(); // get the initial time of the task
 
-//    HAL_UART_Receive_IT(lcd.uart, myrx_data, RX_SIZE_UART); //start the receive
     if (counter_status++ % 100 == 0)
     {
     	//btn_handler(1);
-    	//HAL_GPIO_TogglePin(TRACTION_LED_GPIO_Port, TRACTION_LED_Pin);
+    	HAL_GPIO_TogglePin(TRACTION_LED_GPIO_Port, TRACTION_LED_Pin);
     }
 
     //handle message requests from the LCD screen
@@ -184,11 +185,11 @@ void task_lcd_main()
         btn_handler(1);
       } else if (rx_uart.rx_buffer[1] == STOP_ID_0 && rx_uart.rx_buffer[2] == STOP_ID_1)
       {
-      	page = 0;
         btn_handler(1);
       } else if (rx_uart.rx_buffer[1] == ACTIVE_AERO_ID_0 && rx_uart.rx_buffer[2] == ACTIVE_AERO_ID_1)
       {
         btn_handler(2);
+
       } else if (rx_uart.rx_buffer[1] == ECO_MODE_ID_0 && rx_uart.rx_buffer[2] == ECO_MODE_ID_1)
       {
         btn_handler(3);
@@ -199,7 +200,6 @@ void task_lcd_main()
       {
         btn_handler(5);
       }
-      free(rx_uart.rx_buffer);
     }
 
     //receive can messages and update the lcd screen as necessary
@@ -263,17 +263,21 @@ void task_lcd_main()
             //TODO how to send
         		if ((counter_status % 5) == 0 && page == 1) {
         			main_fault_code = rx_can.Data[0];
-							char* message = malloc(sizeof(*message)*20);
-							sprintf(message, "Main Faults: %x ", main_fault_code & 0xff);
-							set_text("noti", message);
+							sprintf(tx_uart.tx_buffer, "Main Faults: %x ", main_fault_code & 0xff);
+							set_text("noti", tx_uart.tx_buffer);
         		}
             break;
         }
         case MAIN_ACK_ID:
         {
         	//start message accepted change state to ready to drive
-        	page = 1;
-        	set_page("Race");
+        	if (page == START) {
+        		page = RACE;
+        		set_page("Race");
+        	} else {
+        		page = START;
+        		set_page("Start");
+        	}
         	break;
         }
       }

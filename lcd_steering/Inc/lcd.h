@@ -32,20 +32,19 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-
 //LCD Constants What the LCD SCREEN Sends
 #define START_ID_0			    0x00 //start button ID
 #define START_ID_1			    0x01 //second byte
 #define STOP_ID_0			      0x01 //stop button ID
-#define STOP_ID_1			      0x06
+#define STOP_ID_1			      0x05
 #define ACTIVE_AERO_ID_0 	  0x01 //active aero ID
-#define ACTIVE_AERO_ID_1	  0x01
+#define ACTIVE_AERO_ID_1	  0x07
 #define ECO_MODE_ID_0		    0x02 //ECO Mode ID
-#define ECO_MODE_ID_1		    0x02
+#define ECO_MODE_ID_1		    0x01
 #define RACE_MODE_ID_0		  0x02 //Race Mode ID
-#define RACE_MODE_ID_1 		  0x03
+#define RACE_MODE_ID_1 		  0x02
 #define SPORT_MODE_ID_0		  0x02 //Sport Mode ID
-#define SPORT_MODE_ID_1	  	0x04
+#define SPORT_MODE_ID_1	  	0x03
 #define LCD_UPDATE_RATE		  1	 //pick a rate that makes 6b1 ~1hz used currently message is sent at 100hz
 //Can Message Constants
 #define START_MSG_ID				0x350
@@ -68,16 +67,16 @@
 #define STEER_STACK_SIZE		256
 
 //Priority Constatns
-#define LCD_MAIN_PRIORTIY 	1
-#define TX_CAN_PRIORITY		  1
-#define TX_UART_PRIORITY  	1
+#define LCD_MAIN_PRIORTIY 	3
+#define TX_CAN_PRIORITY		  2
+#define TX_UART_PRIORITY  	2
 #define STEER_PRIORITY			1
 
 //Rates
 #define LCD_MAIN_RATE 		  10 / portTICK_RATE_MS
-#define TX_CAN_RATE			    10 / portTICK_RATE_MS
+#define TX_CAN_RATE			    5 / portTICK_RATE_MS
 #define TX_UART_RATE		    10 / portTICK_RATE_MS
-#define STEER_RATE					20 / portTICK_RATE_MS
+#define STEER_RATE					50 / portTICK_RATE_MS
 
 //Delays
 #define DELAY_STARTUP				500 / portTICK_RATE_MS
@@ -93,6 +92,12 @@
 #define BMS_SOC_RED			    10
 #define	BMS_SOC_YEL			    50
 #define BMS_SOC_GREEN		    50
+
+typedef enum {
+	START = 0,
+	RACE = 1,
+	SETTINGS = 2
+}page_t;
 
 //Main LCD structure that holds can handles and all of the queues
 typedef struct

@@ -42,7 +42,8 @@
 ***************************************************************************/
 void set_value(char* obj_name, uint16_t val)
 {
-  char* result = malloc(sizeof(*result) * (strlen(obj_name) + SET_VALUE_EXTRA + 1)); //.val=XXXXXFFF
+  char result[TX_MAX_LEN]; //.val=XXXXXFFF
+  char* ptr = &result[0];
   result[0] = '\0';
   char  str_buff[6] = {0,0,0,0,0, '\0'};
   uint16_t rem = 0;
@@ -54,12 +55,12 @@ void set_value(char* obj_name, uint16_t val)
     str_buff[count] = rem + ASCII_OFFSET;
   }
 
-  strcat(result, obj_name);
-  strcat(result, ".val=");
-  strcat(result, (char*) &str_buff);
-  strcat(result, "\xFF\xFF\xFF");
+  strcat(ptr, obj_name);
+  strcat(ptr, ".val=");
+  strcat(ptr, (char*) &str_buff);
+  strcat(ptr, "\xFF\xFF\xFF");
 
-  update_lcd((uint8_t*) result, strlen(obj_name) + SET_VALUE_EXTRA);
+  update_lcd((uint8_t*) ptr, strlen(obj_name) + SET_VALUE_EXTRA);
 }
 
 /***************************************************************************
@@ -85,14 +86,15 @@ void set_value(char* obj_name, uint16_t val)
 ***************************************************************************/
 void set_text(char* obj_name, char* value)
 {
-  char* result = malloc(sizeof(*result) * (strlen(obj_name) + strlen(value) + SET_TEXT_EXTRA + 1));
+	char result[TX_MAX_LEN]; //.val=XXXXXFFF
+	char* ptr = &result[0];
   result[0] = '\0';
-  strcat(result, obj_name);
-  strcat(result, ".txt=\"");
-  strcat(result, value);
-  strcat(result, "\"\xFF\xFF\xFF");
+  strcat(ptr, obj_name);
+  strcat(ptr, ".txt=\"");
+  strcat(ptr, value);
+  strcat(ptr, "\"\xFF\xFF\xFF");
 
-  update_lcd((uint8_t*) result, strlen(obj_name) + strlen(value) + SET_TEXT_EXTRA);
+  update_lcd((uint8_t*) ptr, strlen(obj_name) + strlen(value) + SET_TEXT_EXTRA);
 }
 
 /***************************************************************************
@@ -118,8 +120,9 @@ void set_text(char* obj_name, char* value)
 ***************************************************************************/
 void set_bco(char* obj_name, uint16_t val)
 {
-  char* result = malloc(sizeof(*result) * (strlen(obj_name) + SET_BCO_EXTRA + 1)); //.val=XXXXXFFF
-  result[0] = '\0';
+	char result[TX_MAX_LEN]; //.val=XXXXXFFF
+	char* ptr = &result[0];
+	result[0] = '\0';
   char  str_buff[6] = {0,0,0,0,0, '\0'};
   uint16_t rem = 0;
 
@@ -130,21 +133,22 @@ void set_bco(char* obj_name, uint16_t val)
     str_buff[count] = rem + ASCII_OFFSET;
   }
 
-  strcat(result, obj_name);
-  strcat(result, ".bco=");
-  strcat(result, (char*) &str_buff);
-  strcat(result, "\xFF\xFF\xFF");
+  strcat(ptr, obj_name);
+  strcat(ptr, ".bco=");
+  strcat(ptr, (char*) &str_buff);
+  strcat(ptr, "\xFF\xFF\xFF");
 
-  update_lcd((uint8_t*) result, strlen(obj_name) + SET_BCO_EXTRA);
+  update_lcd((uint8_t*) ptr, strlen(obj_name) + SET_BCO_EXTRA);
 }
 
 void set_page(char* page_name) {
-  char* result = malloc(sizeof(*result) * (strlen(page_name) + SET_PAGE_EXTRA + 1));
-  result[0] = '\0';
+	char result[TX_MAX_LEN]; //.val=XXXXXFFF
+	char* ptr = &result[0];
+	result[0] = '\0';
   
-  strcat(result, "page ");
-  strcat(result, page_name);
-  strcat(result, "\xFF\xFF\xFF");
+  strcat(ptr, "page ");
+  strcat(ptr, page_name);
+  strcat(ptr, "\xFF\xFF\xFF");
 
-  update_lcd((uint8_t*) result, strlen(page_name) + SET_PAGE_EXTRA);
+  update_lcd((uint8_t*) ptr, strlen(page_name) + SET_PAGE_EXTRA);
 }
