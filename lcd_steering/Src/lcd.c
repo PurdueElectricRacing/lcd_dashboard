@@ -118,10 +118,10 @@ void initRTOSObjects(void)
   {
       error_blink();
   }
-//  if (xTaskCreate(task_txUart, "TX Uart Task", TX_UART_STACK_SIZE, NULL, TX_UART_PRIORITY, NULL) != pdPASS)
-//  {
-//      error_blink();
-//  }
+  if (xTaskCreate(task_txUart, "TX Uart Task", TX_UART_STACK_SIZE, NULL, TX_UART_PRIORITY, NULL) != pdPASS)
+  {
+      error_blink();
+  }
   if (xTaskCreate(taskPollSteer, "Steer Sensor Task", STEER_STACK_SIZE, NULL, STEER_PRIORITY, NULL) != pdPASS)
   {
   		error_blink();
@@ -165,11 +165,11 @@ void task_lcd_main()
   {
     time_init = xTaskGetTickCount(); // get the initial time of the task
 
-//    HAL_UART_Receive_IT(lcd.uart, myrx_data, RX_SIZE_UART); //start the receive
+    HAL_UART_Receive_IT(lcd.uart, myrx_data, RX_SIZE_UART); //start the receive
     if (counter_status++ % 100 == 0)
     {
     	//btn_handler(1);
-    	//HAL_GPIO_TogglePin(TRACTION_LED_GPIO_Port, TRACTION_LED_Pin);
+    	HAL_GPIO_TogglePin(TRACTION_LED_GPIO_Port, TRACTION_LED_Pin);
     }
 
     //handle message requests from the LCD screen

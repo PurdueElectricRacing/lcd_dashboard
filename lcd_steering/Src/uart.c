@@ -111,7 +111,7 @@ void task_txUart()
       free(temp_pt);
     }
 
-    vTaskDelayUntil(&time_init, TX_UART_RATE);
+    vTaskDelayUntil(time_init, TX_UART_RATE);
   }
 }
 
