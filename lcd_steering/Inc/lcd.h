@@ -25,10 +25,10 @@
 #include "cmsis_os.h"
 #include "main.h"
 #include "uart.h"
-#include "can.h"
 #include "steer.h"
 #include "nextion_hardware.h"
 #include "task.h"
+#include "can_usr.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>

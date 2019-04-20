@@ -11,8 +11,8 @@
 *
 ***************************************************************************/
 
-#ifndef CAN_H_
-#define CAN_H_
+#ifndef CAN_USR_H_
+#define CAN_USR_H_
 
 #include "lcd.h"
 
@@ -73,4 +73,4 @@ typedef struct
 void task_txCan();
 void can_filter_init(CAN_HandleTypeDef* hcan);
 
-#endif /* CAN_H_ */
+#endif /* CAN_USR_H_ */

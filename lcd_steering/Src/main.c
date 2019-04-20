@@ -47,12 +47,12 @@
   ******************************************************************************
   */
 /* Includes ------------------------------------------------------------------*/
+#include <can_usr.h>
 #include "main.h"
 #include "stm32l4xx_hal.h"
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN Includes */
-#include "can.h"
 #include "stm32l4xx_hal_uart.h"
 /* USER CODE END Includes */
 
