@@ -59,19 +59,19 @@
 
 /* Private define ------------------------------------------------------------*/
 
-#define LCD_TX_Pin GPIO_PIN_2
-#define LCD_TX_GPIO_Port GPIOA
-#define LCD_RX_Pin GPIO_PIN_3
+#define LCD_RX_Pin GPIO_PIN_2
 #define LCD_RX_GPIO_Port GPIOA
+#define LCD_TX_Pin GPIO_PIN_3
+#define LCD_TX_GPIO_Port GPIOA
+#define START_BTN_Pin GPIO_PIN_4
+#define START_BTN_GPIO_Port GPIOA
+#define START_BTN_EXTI_IRQn EXTI4_IRQn
 #define SteerAngle_Pin GPIO_PIN_7
 #define SteerAngle_GPIO_Port GPIOA
 #define Strain_Ref_Pin GPIO_PIN_0
 #define Strain_Ref_GPIO_Port GPIOB
 #define SteerStrain_Pin GPIO_PIN_1
 #define SteerStrain_GPIO_Port GPIOB
-#define START_Pin GPIO_PIN_3
-#define START_GPIO_Port GPIOB
-#define START_EXTI_IRQn EXTI3_IRQn
 #define TRACTION_EN_Pin GPIO_PIN_5
 #define TRACTION_EN_GPIO_Port GPIOB
 #define TRACTION_EN_EXTI_IRQn EXTI9_5_IRQn

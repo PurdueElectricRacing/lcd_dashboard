@@ -55,21 +55,21 @@
 #define MAIN_FAULT_ID		    0x200
 
 //Queue Constants
-#define RX_CAN_QUEUE_SIZE 	8
+#define RX_CAN_QUEUE_SIZE 	32
 #define TX_CAN_QUEUE_SIZE	  8
 #define RX_UART_QUEUE_SIZE 	5
 #define TX_UART_QUEUE_SIZE 	10
 
 //Stack Constants
-#define LCD_MAIN_STACK_SIZE 256
+#define LCD_MAIN_STACK_SIZE 512
 #define TX_CAN_STACK_SIZE	  256
 #define TX_UART_STACK_SIZE	256
 #define STEER_STACK_SIZE		256
 
 //Priority Constatns
-#define LCD_MAIN_PRIORTIY 	3
-#define TX_CAN_PRIORITY		  2
-#define TX_UART_PRIORITY  	2
+#define LCD_MAIN_PRIORTIY 	1
+#define TX_CAN_PRIORITY		  1
+#define TX_UART_PRIORITY  	1
 #define STEER_PRIORITY			1
 
 //Rates

@@ -173,31 +173,31 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-* @brief This function handles EXTI line3 interrupt.
+* @brief This function handles EXTI line4 interrupt.
 */
-void EXTI3_IRQHandler(void)
+void EXTI4_IRQHandler(void)
 {
-  /* USER CODE BEGIN EXTI3_IRQn 0 */
-	//START BUTTON
-	BaseType_t xHigherPriorityTaskWoken;
-	if (xTaskGetTickCountFromISR() - BTN3_LastPressedTime > 500)
-	{
-		CanTxMsgTypeDef msg;
-		msg.IDE = CAN_ID_STD;
-		msg.RTR = CAN_RTR_DATA;
-		msg.DLC = 1;
-		msg.StdId = START_MSG_ID;
-		msg.Data[0] = 1;
+  /* USER CODE BEGIN EXTI4_IRQn 0 */
+  //START BUTTON
+  BaseType_t xHigherPriorityTaskWoken;
+  if (xTaskGetTickCountFromISR() - BTN3_LastPressedTime > 500)
+  {
+    CanTxMsgTypeDef msg;
+    msg.IDE = CAN_ID_STD;
+    msg.RTR = CAN_RTR_DATA;
+    msg.DLC = 1;
+    msg.StdId = START_MSG_ID;
+    msg.Data[0] = 1;
 
-		xQueueSendToBackFromISR(lcd.q_tx_can, &msg, &xHigherPriorityTaskWoken);
-		BTN3_LastPressedTime = xTaskGetTickCountFromISR();
-	}
+    xQueueSendToBackFromISR(lcd.q_tx_can, &msg, &xHigherPriorityTaskWoken);
+    BTN3_LastPressedTime = xTaskGetTickCountFromISR();
+  }
 
-  /* USER CODE END EXTI3_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
-  /* USER CODE BEGIN EXTI3_IRQn 1 */
+  /* USER CODE END EXTI4_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
+  /* USER CODE BEGIN EXTI4_IRQn 1 */
 
-  /* USER CODE END EXTI3_IRQn 1 */
+  /* USER CODE END EXTI4_IRQn 1 */
 }
 
 /**

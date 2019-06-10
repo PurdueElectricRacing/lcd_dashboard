@@ -10,6 +10,9 @@
 
 #include "lcd.h"
 
+#define FULL_LEFT   0x5BA
+#define FULL_RIGHT  0xFC0
+
 
 void taskPollSteer();
 

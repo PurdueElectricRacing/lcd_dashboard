@@ -167,7 +167,6 @@ void task_lcd_main()
   {
     time_init = xTaskGetTickCount(); // get the initial time of the task
 
-    HAL_UART_Receive_IT(lcd.uart, myrx_data, RX_SIZE_UART); //start the receive
     if (counter_status++ % 100 == 0)
     {
     	//btn_handler(1);
@@ -229,10 +228,12 @@ void task_lcd_main()
             if (bms.high_temp > BMS_OVER_TEMP_RED)
             {
               set_bco("Temp", RED);
-            } else if (bms.high_temp > BMS_OVER_TEMP_YEL)
+            }
+            else if (bms.high_temp > BMS_OVER_TEMP_YEL)
             {
               set_bco("Temp", YELLOW);
-            } else
+            }
+            else
             {
               set_bco("Temp", GREEN);
             }
@@ -240,7 +241,8 @@ void task_lcd_main()
             if (bms.pack_volt < BMS_UNDER_VOLT_RED)
             {
               set_bco("Volt", RED);
-            } else
+            }
+            else
             {
               set_bco("Char", GREEN);
             }
@@ -248,10 +250,12 @@ void task_lcd_main()
             if (bms.pack_soc < BMS_SOC_RED)
             {
               set_bco("Char", RED);
-            } else if (bms.pack_soc < BMS_SOC_YEL)
+            }
+            else if (bms.pack_soc < BMS_SOC_YEL)
             {
               set_bco("Char", YELLOW);
-            } else
+            }
+            else
             {
               set_bco("Char", GREEN);
             }
@@ -260,22 +264,21 @@ void task_lcd_main()
         }
         case MAIN_FAULT_ID:
         {
-            //display whatever main faults to the screen
-            //TODO how to send
-        		if ((counter_status % 5) == 0 && page == 1) {
-        			main_fault_code = rx_can.Data[0];
-							sprintf(tx_uart.tx_buffer, "Main Faults: %x ", main_fault_code & 0xff);
-							set_text("noti", tx_uart.tx_buffer);
-        		}
-            break;
+          //display whatever main faults to the screen
+          if ((counter_status % 5) == 0 && page == 1) {
+            main_fault_code = rx_can.Data[0];
+            sprintf((char*) &tx_uart.tx_buffer[0], "Main Faults: %x ", main_fault_code & 0xff);
+            set_text("noti", (char *) &tx_uart.tx_buffer[0]);
+          }
+          break;
         }
         case MAIN_ACK_ID:
         {
         	//start message accepted change state to ready to drive
-        	if (page == START) {
+        	if (page == START && rx_can.Data[0] == 1) {
         		page = RACE;
         		set_page("Race");
-        	} else {
+        	} else if (page == RACE && rx_can.Data[0] == 2){
         		page = START;
         		set_page("Start");
         	}

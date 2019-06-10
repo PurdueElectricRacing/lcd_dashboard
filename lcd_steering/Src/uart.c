@@ -108,7 +108,7 @@ void task_txUart()
       HAL_Delay(DELAY_UART * 5);
     }
 
-    vTaskDelayUntil(time_init, TX_UART_RATE);
+    vTaskDelayUntil(&time_init, TX_UART_RATE);
   }
 }
 
@@ -136,7 +136,6 @@ void update_lcd(uint8_t* buffer, uint8_t size)
   uart_tx_t tx;
   tx.tx_size = size;
   memcpy(&tx.tx_buffer[0], buffer, size);
-
   while(uxQueueMessagesWaiting(lcd.q_tx_uart) == TX_UART_QUEUE_SIZE)
   {
     vTaskDelay(WAIT_QUEUE_FULL); //wait till space opens up
