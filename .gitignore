@@ -8,3 +8,5 @@
 !lcd_steering/Inc/
 !lcd_steering/Src/
 !lcd_steering/*.ioc
+!Assets/
+!Assets/*
