@@ -10,3 +10,5 @@
 !lcd_steering/*.ioc
 !Assets/
 !Assets/*
+!Assets/Fonts/*
+
