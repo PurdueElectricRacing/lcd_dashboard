@@ -47,6 +47,22 @@
 #define SPORT_MODE_ID_1	  	0x03
 #define LCD_UPDATE_RATE		  1	 //pick a rate that makes 6b1 ~1hz used currently message is sent at 100hz
 //Can Message Constants
+#define AVG_CELL_VOLTAGE_ID       0x401
+#define MAX_CELL_VOLTAGE_ID       0x402
+#define LOW_CELL_VOLTAGE_ID		  0x403
+#define AVG_TEMP_ID				  0x404
+#define HIGH_TEMP_ID              0x405
+#define LOW_TEMP_ID               0x406
+#define PACK_CURRENT_ID           0x407
+#define INSTANT_PACK_VOLT_ID      0x408
+#define PACK_CURRENT_LOW_ID       0x03B
+#define PACK_DISCH_LIM_ID         0x03C
+#define SOC_CELL_LIMS             0x6B1
+#define MAIN_HEARTBEAT            0x420
+#define WHEEL_SPEED_FRONT         0x700
+#define WHEEL_SPEED_REAR          0x701
+#define TC_TV                     0x351
+#define START_BUTTON              0x350
 #define START_MSG_ID				0x350
 #define BMS_MSG_ID			    0x6B1
 #define MAIN_ACK_ID					0x360
