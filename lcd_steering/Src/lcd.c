@@ -170,7 +170,7 @@ void task_lcd_main()
     if (counter_status++ % 100 == 0)
     {
     	//btn_handler(1);
-    	HAL_GPIO_TogglePin(TRACTION_LED_GPIO_Port, TRACTION_LED_Pin);
+    	//HAL_GPIO_TogglePin(TRACTION_LED_GPIO_Port, TRACTION_LED_Pin);
     }
 
     //handle message requests from the LCD screen
