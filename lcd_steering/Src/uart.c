@@ -43,7 +43,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
   uart_rx_t rx;
   rx.rx_size = RX_SIZE_UART;
   memcpy(rx.rx_buffer, myrx_data, rx.rx_size);
-  xQueueSendToBackFromISR(lcd.q_rx_uart, &rx, 0);
+  qSendToBack(&lcd.q_rx_uart, &rx);
   HAL_UART_Receive_IT(lcd.uart, myrx_data, RX_SIZE_UART); //start the receive
 }
 
@@ -93,22 +93,16 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart)
 ***************************************************************************/
 void task_txUart()
 {
-  uart_tx_t tx;
-  TickType_t time_init = 0;
-  while (1) {
-    time_init = xTaskGetTickCount();
-    //check if this task is triggered
-    if (xQueuePeek(lcd.q_tx_uart, &tx, TIMEOUT) == pdTRUE)
-    {
-      xQueueReceive(lcd.q_tx_uart, &tx, TIMEOUT);  //actually take item out of queue
+  static uart_tx_t tx;
 
-      //send the message
-      HAL_UART_Transmit_IT(lcd.uart, tx.tx_buffer, tx.tx_size);
-      //This delay might be able to change. Used to prevent to much throughput to the Nextion
-      HAL_Delay(DELAY_UART * 5);
-    }
+  //check if this task is triggered
+  if( qReceive(&lcd.q_tx_uart, &tx) == QUEUE_SUCCESS )
+  {
 
-    vTaskDelayUntil(&time_init, TX_UART_RATE);
+    //send the message
+    HAL_UART_Transmit_IT(lcd.uart, tx.tx_buffer, tx.tx_size);
+    //This delay might be able to change. Used to prevent to much throughput to the Nextion
+    //HAL_Delay(DELAY_UART * 5);
   }
 }
 
@@ -136,11 +130,11 @@ void update_lcd(uint8_t* buffer, uint8_t size)
   uart_tx_t tx;
   tx.tx_size = size;
   memcpy(&tx.tx_buffer[0], buffer, size);
-  while(uxQueueMessagesWaiting(lcd.q_tx_uart) == TX_UART_QUEUE_SIZE)
+  while(qIsFull(&lcd.q_tx_uart))
   {
-    vTaskDelay(WAIT_QUEUE_FULL); //wait till space opens up
+    HAL_DELAY(WAIT_QUEUE_FULL);
   }
-  if (xQueueSendToBack(lcd.q_tx_uart, &tx, TIMEOUT) != pdTRUE)
+  if(qReceive(&lcd.q_tx_uart, &tx) == QUEUE_SUCCESS)
   {
     //should never get here
     error_blink();

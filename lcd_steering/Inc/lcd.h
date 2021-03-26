@@ -32,6 +32,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "queue.h"
+
+#define PER 1
+#define GREAT PER
+
 //LCD Constants What the LCD SCREEN Sends
 #define START_ID_0			    0x00 //start button ID
 #define START_ID_1			    0x01 //second byte
@@ -55,16 +60,16 @@
 #define MAIN_FAULT_ID		    0x200
 
 //Queue Constants
-#define RX_CAN_QUEUE_SIZE 	32
-#define TX_CAN_QUEUE_SIZE	  8
-#define RX_UART_QUEUE_SIZE 	5
-#define TX_UART_QUEUE_SIZE 	10
+// OLD: #define RX_CAN_QUEUE_SIZE 	32
+// OLD: #define TX_CAN_QUEUE_SIZE	  8
+// OLD: #define RX_UART_QUEUE_SIZE 	5
+// OLD: #define TX_UART_QUEUE_SIZE 	10
 
 //Stack Constants
-#define LCD_MAIN_STACK_SIZE 512
-#define TX_CAN_STACK_SIZE	  256
-#define TX_UART_STACK_SIZE	256
-#define STEER_STACK_SIZE		256
+// OLD: #define LCD_MAIN_STACK_SIZE 512
+// OLD: #define TX_CAN_STACK_SIZE	  256
+// OLD: #define TX_UART_STACK_SIZE	256
+// OLD: #define STEER_STACK_SIZE		256
 
 //Priority Constatns
 #define LCD_MAIN_PRIORTIY 	1
@@ -73,17 +78,17 @@
 #define STEER_PRIORITY			1
 
 //Rates
-#define LCD_MAIN_RATE 		  10 / portTICK_RATE_MS
-#define TX_CAN_RATE			    5 / portTICK_RATE_MS
-#define TX_UART_RATE		    10 / portTICK_RATE_MS
-#define STEER_RATE					50 / portTICK_RATE_MS
+#define LCD_MAIN_RATE 		  10 // portTICK_RATE_MS
+#define TX_CAN_RATE			    5 // portTICK_RATE_MS
+#define TX_UART_RATE		    10 // portTICK_RATE_MS
+#define STEER_RATE					50 // portTICK_RATE_MS
 
 //Delays
 #define DELAY_STARTUP				500 / portTICK_RATE_MS
 
 //Timeouts
 #define TIMEOUT				      5 / portTICK_RATE_MS
-#define WAIT_QUEUE_FULL		  30 / portTICK_RATE_MS
+#define WAIT_QUEUE_FULL		  30 //OLD: portTICK_RATE_MS
 
 //LCD Bounds Constants
 #define BMS_OVER_TEMP_RED	  60
@@ -105,10 +110,11 @@ typedef struct
   CAN_HandleTypeDef* 	can;
   UART_HandleTypeDef* uart;
 
-  QueueHandle_t 		q_rx_can;
-  QueueHandle_t 		q_tx_can;
-  QueueHandle_t 		q_rx_uart;
-  QueueHandle_t 		q_tx_uart;
+  q_handle_t q_rx_can;
+  q_handle_t q_tx_can;
+  q_handle_t q_rx_uart;
+  q_handle_t q_tx_uart;
+
 }lcd_t;
 
 //Used to update the LCD screen
@@ -122,7 +128,8 @@ typedef struct
 void task_lcd_main();
 int btn_handler(uint8_t btn);
 void error_blink();
-void initRTOSObjects(void);
+// OLD: void initRTOSObjects(void);
+void initLcd();
 
 lcd_t lcd;
 

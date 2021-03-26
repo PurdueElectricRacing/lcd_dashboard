@@ -69,7 +69,17 @@ void StartDefaultTask(void const * argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+uint8_t loop, run;
 
+void TIM2_IRQHandler()
+{
+    TIM2->SR &= ~TIM_SR_UIF;                                        // Acknowledge the interrupt
+    run = 1;                                                        // Signal main loop to process
+    if (loop++ > 200)                                               // Wrap when close to 255 to prevent jitter
+    {
+        loop = 0;                                                   // Reset loop value
+    }
+}
 /* USER CODE END 0 */
 
 /**
@@ -107,7 +117,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   HAL_Delay(DELAY_UART);
-  initRTOSObjects(); //start tasks
+  
 
   can_filter_init(&hcan1);
   HAL_Delay(DELAY_UART);
@@ -117,6 +127,10 @@ int main(void)
 
   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO1_MSG_PENDING);
+
+  loop = 0;
+  run = 0;
+  initLcd(); // sets up queues and timers
 
   /* USER CODE END 2 */
 
@@ -138,26 +152,39 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  //osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
+  //defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
   /* Start scheduler */
-  osKernelStart();
+  //osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
+  while (PER == GREAT)
   {
-
     /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
 
+    if (loop % TX_CAN_RATE == 0)
+    {
+      task_txCan();
+    }
+    if (loop % TX_UART_RATE == 0)
+    {
+      task_txUart();
+    }
+    if (loop % STEER_RATE == 0)
+    {
+      taskPollSteer();
+    }
+
+    while (!run); // loop is ran every 1 ms
+    run = 0;
   }
   /* USER CODE END 3 */
 }

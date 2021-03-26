@@ -43,7 +43,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   HAL_CAN_GetRxMessage(hcan, 0, &header, rx.Data);
   rx.DLC = header.DLC;
   rx.StdId = header.StdId;
-  xQueueSendFromISR(lcd.q_rx_can, &rx, 0);
+  qSendToBack(&lcd.q_rx_can, &rx);
 //  HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
 }
 
@@ -74,7 +74,7 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
   HAL_CAN_GetRxMessage(hcan, 0, &header, rx.Data);
   rx.DLC = header.DLC;
   rx.StdId = header.StdId;
-  xQueueSendFromISR(lcd.q_rx_can, &rx, 0);
+  qSendToBack(&lcd.q_rx_can, &rx);
 }
 
 /***************************************************************************
@@ -99,28 +99,22 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 ***************************************************************************/
 void task_txCan()
 {
-  CanTxMsgTypeDef tx;
-  TickType_t time_init = 0;
-  while (1)
+  static CanTxMsgTypeDef tx;
+
+  //check if this task is triggered
+  if(qReceive(&lcd.q_tx_can, &tx) == QUEUE_SUCCESS)
   {
-    time_init = xTaskGetTickCount();
-//check if this task is triggered
-    if (xQueuePeek(lcd.q_tx_can, &tx, TIMEOUT) == pdTRUE)
-    {
-      xQueueReceive(lcd.q_tx_can, &tx, TIMEOUT);  //actually take item out of queue
-      CAN_TxHeaderTypeDef header;
-      header.DLC = tx.DLC;
-      header.IDE = tx.IDE;
-      header.RTR = tx.RTR;
-      header.StdId = tx.StdId;
-      header.TransmitGlobalTime = DISABLE;
-      uint32_t mailbox;
-      //HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
-      //send the message
-      while (!HAL_CAN_GetTxMailboxesFreeLevel(lcd.can)); // while mailboxes not free
-      HAL_CAN_AddTxMessage(lcd.can, &header, tx.Data, &mailbox);
-    }
-    vTaskDelayUntil(&time_init, TX_CAN_RATE);
+    CAN_TxHeaderTypeDef header;
+    header.DLC = tx.DLC;
+    header.IDE = tx.IDE;
+    header.RTR = tx.RTR;
+    header.StdId = tx.StdId;
+    header.TransmitGlobalTime = DISABLE;
+    uint32_t mailbox;
+    //HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
+    //send the message
+    while (!HAL_CAN_GetTxMailboxesFreeLevel(lcd.can)); // while mailboxes not free
+    HAL_CAN_AddTxMessage(lcd.can, &header, tx.Data, &mailbox);
   }
 }
 

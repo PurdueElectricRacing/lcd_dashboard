@@ -19,6 +19,9 @@
 
 #include "lcd.h"
 
+
+uint8_t loop, run;
+
 /***************************************************************************
 *
 *     Function Information
@@ -49,7 +52,7 @@ int btn_handler(uint8_t btn)
   msg.StdId = START_MSG_ID;
   msg.Data[0] = btn;
 
-  xQueueSendToBack(lcd.q_tx_can, &msg, 100);
+  qSendToBack(&lcd.q_tx_can, &msg);
   return 0;
 }
 
@@ -81,52 +84,25 @@ void error_blink()
   }
 }
 
-/***************************************************************************
-*
-*     Function Information
-*
-*     Name of Function: initRTOSObjects
-*
-*     Programmer's Name: Matt Flanagan
-*
-*     Function Return Type: None
-*
-*     Parameters (list data type, name, and comment one per line):
-*       1. None
-*       
-*      Global Dependents:
-*       1. None
-*
-*     Function Description: Creates the queues for rx and tx on CAN and UART.
-*     
-*
-***************************************************************************/
-void initRTOSObjects(void)
+// Sets up queues
+// Sets up the timer to increment os_ticks every 1ms
+void initLcd()
 {
-    //initialize the queues
-  lcd.q_rx_can = xQueueCreate(RX_CAN_QUEUE_SIZE, sizeof(CanRxMsgTypeDef));
-  lcd.q_tx_can = xQueueCreate(TX_CAN_QUEUE_SIZE, sizeof(CanTxMsgTypeDef));
-  lcd.q_rx_uart = xQueueCreate(RX_UART_QUEUE_SIZE, sizeof(uart_rx_t));
-  lcd.q_tx_uart = xQueueCreate(TX_UART_QUEUE_SIZE, sizeof(uart_tx_t));
+  qConstruct(&lcd.q_rx_can, sizeof(CanRxMsgTypeDef));
+  qConstruct(&lcd.q_tx_can, sizeof(CanTxMsgTypeDef));
+  qConstruct(&lcd.q_rx_uart, sizeof(uart_rx_t));
+  qConstruct(&lcd.q_tx_uart, sizeof(uart_tx_t));
 
-  //create tasks
-  if (xTaskCreate(task_lcd_main, "Main Task", LCD_MAIN_STACK_SIZE, NULL, LCD_MAIN_PRIORTIY, NULL) != pdPASS)
-  {
-      error_blink();
-  }
-  if (xTaskCreate(task_txCan, "Tx Can Task", TX_CAN_STACK_SIZE, NULL, TX_CAN_PRIORITY, NULL) != pdPASS)
-  {
-      error_blink();
-  }
-  if (xTaskCreate(task_txUart, "TX Uart Task", TX_UART_STACK_SIZE, NULL, TX_UART_PRIORITY, NULL) != pdPASS)
-  {
-      error_blink();
-  }
-  if (xTaskCreate(taskPollSteer, "Steer Sensor Task", STEER_STACK_SIZE, NULL, STEER_PRIORITY, NULL) != pdPASS)
-  {
-  		error_blink();
-  }
+  RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;   // Enable timer clock in RCC
+  TIM2->PSC = 3200 - 1; // AHB2 is configured at 32Mhz
+  TIM2->ARR = 10;
+  TIM2->CR1 &= ~(TIM_CR1_DIR);
+  TIM2->DIER |= TIM_DIER_UIE;
+  NVIC->ISER[0] |= 1 << TIM2_IRQn;
+  TIM2->CR1 |= TIM_CR1_CEN;
+
 }
+
 
 /***************************************************************************
 *
@@ -148,7 +124,7 @@ void initRTOSObjects(void)
 *     received from can or the lcd screen. This currently is set to run at a 100 Hz.
 *
 ***************************************************************************/
-void task_lcd_main()
+/*void task_lcd_main()
 {
   lcd.can = &hcan1;
   lcd.uart = &huart2;
@@ -289,6 +265,6 @@ void task_lcd_main()
 
     vTaskDelayUntil(&time_init, LCD_MAIN_RATE);
   }
-}
+}*/
 
 
