@@ -22,12 +22,12 @@
 #include "stm32l4xx_hal_can.h"
 #include "stm32l4xx_hal_uart.h"
 #include "stm32l4xx_hal_adc.h"
-#include "cmsis_os.h"
+//#include "cmsis_os.h"
 #include "main.h"
 #include "uart.h"
 #include "steer.h"
 #include "nextion_hardware.h"
-#include "task.h"
+//#include "task.h"
 #include "can_usr.h"
 #include <string.h>
 #include <stdlib.h>
@@ -84,10 +84,10 @@
 #define STEER_RATE					50 // portTICK_RATE_MS
 
 //Delays
-#define DELAY_STARTUP				500 / portTICK_RATE_MS
+#define DELAY_STARTUP				500 // portTICK_RATE_MS
 
 //Timeouts
-#define TIMEOUT				      5 / portTICK_RATE_MS
+#define TIMEOUT				      5 // portTICK_RATE_MS
 #define WAIT_QUEUE_FULL		  30 //OLD: portTICK_RATE_MS
 
 //LCD Bounds Constants

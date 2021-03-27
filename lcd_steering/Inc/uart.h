@@ -20,7 +20,7 @@
 //standard rx size constant
 #define RX_SIZE_UART 7
 #define TX_MAX_LEN	 30
-#define DELAY_UART	 10 / portTICK_RATE_MS
+#define DELAY_UART	 10 // portTICK_RATE_MS
 
 typedef struct
 {

@@ -130,9 +130,9 @@ void update_lcd(uint8_t* buffer, uint8_t size)
   uart_tx_t tx;
   tx.tx_size = size;
   memcpy(&tx.tx_buffer[0], buffer, size);
-  while(qIsFull(&lcd.q_tx_uart))
+  while(qIsFull(&lcd.q_tx_uart)) // if full, should only loop once (not blocking for long)
   {
-    HAL_DELAY(WAIT_QUEUE_FULL);
+    task_txUart();
   }
   if(qReceive(&lcd.q_tx_uart, &tx) == QUEUE_SUCCESS)
   {

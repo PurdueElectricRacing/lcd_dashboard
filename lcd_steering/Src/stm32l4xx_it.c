@@ -53,9 +53,9 @@
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 #include "lcd.h"
-TickType_t START_LastPressedTime=0;
-TickType_t TRAC_LastPressedTime=0;
-TickType_t BTN3_LastPressedTime=0;
+uint32_t START_LastPressedTime=0;
+//TickType_t TRAC_LastPressedTime=0;
+//TickType_t BTN3_LastPressedTime=0;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -144,6 +144,19 @@ void UsageFault_Handler(void)
 }
 
 /**
+  * @brief This function handles System service call via SWI instruction.
+  */
+void SVC_Handler(void)
+{
+  /* USER CODE BEGIN SVCall_IRQn 0 */
+
+  /* USER CODE END SVCall_IRQn 0 */
+  /* USER CODE BEGIN SVCall_IRQn 1 */
+
+  /* USER CODE END SVCall_IRQn 1 */
+}
+
+/**
   * @brief This function handles Debug monitor.
   */
 void DebugMon_Handler(void)
@@ -154,6 +167,32 @@ void DebugMon_Handler(void)
   /* USER CODE BEGIN DebugMonitor_IRQn 1 */
 
   /* USER CODE END DebugMonitor_IRQn 1 */
+}
+
+/**
+  * @brief This function handles Pendable request for system service.
+  */
+void PendSV_Handler(void)
+{
+  /* USER CODE BEGIN PendSV_IRQn 0 */
+
+  /* USER CODE END PendSV_IRQn 0 */
+  /* USER CODE BEGIN PendSV_IRQn 1 */
+
+  /* USER CODE END PendSV_IRQn 1 */
+}
+
+/**
+  * @brief This function handles System tick timer.
+  */
+void SysTick_Handler(void)
+{
+  /* USER CODE BEGIN SysTick_IRQn 0 */
+
+  /* USER CODE END SysTick_IRQn 0 */
+  /* USER CODE BEGIN SysTick_IRQn 1 */
+
+  /* USER CODE END SysTick_IRQn 1 */
 }
 
 /******************************************************************************/
@@ -173,8 +212,8 @@ void EXTI4_IRQHandler(void)
   /* USER CODE END EXTI4_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
   /* USER CODE BEGIN EXTI4_IRQn 1 */
-  BaseType_t xHigherPriorityTaskWoken;
-  if (xTaskGetTickCountFromISR() - BTN3_LastPressedTime > 500)
+  //BaseType_t xHigherPriorityTaskWoken;
+  if (TIM2->CNT & 0xffff - START_LastPressedTime > 500)
   {
     CanTxMsgTypeDef msg;
     msg.IDE = CAN_ID_STD;
@@ -183,8 +222,8 @@ void EXTI4_IRQHandler(void)
     msg.StdId = START_MSG_ID;
     msg.Data[0] = 1;
 
-    xQueueSendToBackFromISR(lcd.q_tx_can, &msg, &xHigherPriorityTaskWoken);
-    BTN3_LastPressedTime = xTaskGetTickCountFromISR();
+    qSendToBack(&lcd.q_tx_can, &msg);
+    START_LastPressedTime = (TIM2->CNT & 0xffff) - START_LastPressedTime > 500;
   }
   /* USER CODE END EXTI4_IRQn 1 */
 }
@@ -238,7 +277,7 @@ void EXTI9_5_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
 	//TRACTION CONTROL TOGGLE BUTTON
-	BaseType_t xHigherPriorityTaskWoken;
+	/*BaseType_t xHigherPriorityTaskWoken;
 	if (xTaskGetTickCountFromISR() - BTN3_LastPressedTime > 500)
 	{
 		CanTxMsgTypeDef msg;
@@ -250,7 +289,7 @@ void EXTI9_5_IRQHandler(void)
 
 		xQueueSendToBackFromISR(lcd.q_tx_can, &msg, &xHigherPriorityTaskWoken);
 		BTN3_LastPressedTime = xTaskGetTickCountFromISR();
-	}
+	}*/
   /* USER CODE END EXTI9_5_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_5);
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_7);
