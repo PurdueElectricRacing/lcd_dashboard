@@ -223,7 +223,7 @@ void EXTI4_IRQHandler(void)
     msg.Data[0] = 1;
 
     qSendToBack(&lcd.q_tx_can, &msg);
-    START_LastPressedTime = (TIM2->CNT & 0xffff) - START_LastPressedTime > 500;
+    START_LastPressedTime = (TIM2->CNT & 0xffff);
   }
   /* USER CODE END EXTI4_IRQn 1 */
 }
