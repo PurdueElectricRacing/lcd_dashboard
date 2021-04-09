@@ -4,7 +4,7 @@
   * @brief   Interrupt Service Routines.
   ******************************************************************************
   *
-  * COPYRIGHT(c) 2019 STMicroelectronics
+  * COPYRIGHT(c) 2021 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -50,7 +50,7 @@ extern UART_HandleTypeDef huart2;
 extern TIM_HandleTypeDef htim1;
 
 /******************************************************************************/
-/*            Cortex-M4 Processor Interruption and Exception Handlers         */ 
+/*            Cortex-M4 Processor Interruption and Exception Handlers         */
 /******************************************************************************/
 
 /**
@@ -159,7 +159,7 @@ void SysTick_Handler(void)
   /* USER CODE BEGIN SysTick_IRQn 0 */
 
   /* USER CODE END SysTick_IRQn 0 */
-  osSystickHandler();
+  HAL_SYSTICK_IRQHandler();
   /* USER CODE BEGIN SysTick_IRQn 1 */
 
   /* USER CODE END SysTick_IRQn 1 */

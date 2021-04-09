@@ -40,119 +40,8 @@
 *     to be sent to main module.
 *
 ***************************************************************************/
-int btn_handler(uint8_t btn)
-{
-	tx.IDE =  	CAN_ID_STD;            //information relating to CAN frame
-	tx.RTR =	CAN_RTR_DATA;          //information relating to CAN frame
-	tx.DLC =  	1;                     //Number of bits the buttons need
-	tx.Data[0] = 0x01;	               //information relating to CAN frame
-if (btn == 1)					//checks if button 1 is pressed
-{
-	tx.StdId = START_BUTTON;	//sends START_BUTTON can frame
-}
-else if (btn == 2)              //checks if button 2 is pressed if button 1 is not
-{
-	 tx.StdId = TC_TV;          //sends TC_TV can frame
-}
-xQueueSendToBack(car.q_txcan, &tx, 100);	//Queue for can frames
+int btn_handler(uint8_t btn) {
 
-  CanTxMsgTypeDef msg;
-  msg.IDE = CAN_ID_STD;
-  msg.RTR = CAN_RTR_DATA;
-  msg.DLC = 1;
-  msg.StdId = START_MSG_ID;
-  msg.Data[0] = btn;
-
-  xQueueSendToBack(lcd.q_tx_can, &msg, 100);
-  return 0;
-  tx.StdId = 	START_BUTTON;
-  tx.IDE =  	CAN_ID_STD;
-  tx.RTR =	CAN_RTR_DATA;
-  tx.DLC =  	1;
-  tx.Data[0] = 0x01;
-  xQueueSendToBack(car.q_txcan, &tx, 100);
-
-  tx.StdId = 	TC_TV;
-  tx.IDE =  	CAN_ID_STD;
-  tx.RTR =	CAN_RTR_DATA;
-  tx.DLC =  	1;
-  tx.Data[0] = 0x01;
-    xQueueSendToBack(car.q_txcan, &tx, 100);
-}
-
-/***************************************************************************
-*
-*     Function Information
-*
-*     Name of Function: error_blink
-*
-*     Programmer's Name: Matt Flanagan
-*
-*     Function Return Type: None
-*
-*     Parameters (list data type, name, and comment one per line):
-*       1.None
-*       
-*      Global Dependents:
-*       1. None
-*
-*     Function Description: Error catching for debugging purposes.
-*
-***************************************************************************/
-void error_blink()
-{
-  while (1)
-  {
-    //HAL_GPIO_TogglePin(ERROR_LED_GPIO_Port, ERROR_LED_Pin);
-    HAL_Delay(1000);
-  }
-}
-
-/***************************************************************************
-*
-*     Function Information
-*
-*     Name of Function: initRTOSObjects
-*
-*     Programmer's Name: Matt Flanagan
-*
-*     Function Return Type: None
-*
-*     Parameters (list data type, name, and comment one per line):
-*       1. None
-*       
-*      Global Dependents:
-*       1. None
-*
-*     Function Description: Creates the queues for rx and tx on CAN and UART.
-*     
-*
-***************************************************************************/
-void initRTOSObjects(void)
-{
-    //initialize the queues
-  lcd.q_rx_can = xQueueCreate(RX_CAN_QUEUE_SIZE, sizeof(CanRxMsgTypeDef));
-  lcd.q_tx_can = xQueueCreate(TX_CAN_QUEUE_SIZE, sizeof(CanTxMsgTypeDef));
-  lcd.q_rx_uart = xQueueCreate(RX_UART_QUEUE_SIZE, sizeof(uart_rx_t));
-  lcd.q_tx_uart = xQueueCreate(TX_UART_QUEUE_SIZE, sizeof(uart_tx_t));
-
-  //create tasks
-  if (xTaskCreate(task_lcd_main, "Main Task", LCD_MAIN_STACK_SIZE, NULL, LCD_MAIN_PRIORTIY, NULL) != pdPASS)
-  {
-      error_blink();
-  }
-  if (xTaskCreate(task_txCan, "Tx Can Task", TX_CAN_STACK_SIZE, NULL, TX_CAN_PRIORITY, NULL) != pdPASS)
-  {
-      error_blink();
-  }
-  if (xTaskCreate(task_txUart, "TX Uart Task", TX_UART_STACK_SIZE, NULL, TX_UART_PRIORITY, NULL) != pdPASS)
-  {
-      error_blink();
-  }
-  if (xTaskCreate(taskPollSteer, "Steer Sensor Task", STEER_STACK_SIZE, NULL, STEER_PRIORITY, NULL) != pdPASS)
-  {
-  		error_blink();
-  }
 }
 
 /***************************************************************************
@@ -175,6 +64,302 @@ void initRTOSObjects(void)
 *     received from can or the lcd screen. This currently is set to run at a 100 Hz.
 *
 ***************************************************************************/
+void task_lcd_main()
+{
+    // Locals
+    lcd.can =       &hcan1;                                                             // CAN handle
+    lcd.uart =      &huart2;                                                            // UART handle
+    page_t page =   SPLASH;                                                             // Current page
+    CanRxMsgTypeDef rx_can;                                                             // CAN rx frame
+    uint16_t        counter = 0;
+    uint16_t        counter_status = 0;
+    uint8_t         main_fault_code = 0;
+    TickType_t      time_init;                                                          // Current time
+    uart_rx_t       rx_uart;                                                            // UART rx frame
+    uart_tx_t       tx_uart;                                                            // UART tx frame
+    uint16_t        read_id;                                                            // ID rx'd from UART
+
+    time_init = xTaskGetTickCount();                                                    // Get the initial time of the task
+
+    while (PER == GREAT)                                                                // Loop forever
+    {
+        if (xQueuePeek(lcd.q_rx_uart, &rx_uart, TIMEOUT) == pdTRUE)                     // Check if there's an item in the queue
+        {
+            xQueueReceive(lcd.q_rx_uart, &rx_uart, TIMEOUT);                            // Pull the item from the queue
+
+            read_id = ((uint16_t) rx_uart.rx_buffer[1] << 8) | rx_uart.rx_buffer[0];    // Combine ID
+
+            // rx_buffer[1] = 1111 | 0000
+            // rx_buffer[0] = 1010 | 1010
+
+            // rx_buffer[1] = 0000 | 0000 | 1111 | 0000
+            // rx_buffer[1] = 1111 | 0000 | 0000 | 0000
+
+            // 1111 | 0000 | 0000 | 0000
+            // 0000 | 0000 | 1010 | 1010
+            // 1111 | 0000 | 1010 | 1010
+
+            switch (page)
+            {
+                case SPLASH:
+                {
+                    switch (read_id)
+                    {
+                        case SPLASH_PETE:
+                        {
+                            set_page("Race_voltage");
+                            break;
+                        }
+                    }
+                    break;
+                }
+
+                case RACE_VOLTAGE:
+                {
+                    switch (read_id)
+                    {
+                        case VOLTAGE_MENU:
+                        {
+                            set_page("Menu");
+                            break;
+                        }
+                        case VOLTAGE_BATTERY:
+                        {
+                            set_page("Race_battery");
+                            break;
+                        }
+                        case VOLTAGE_SPEED:
+                        {
+                            set_page("Race_mph");
+                            break;
+                        }
+                    }
+                    break;
+                }
+                case MENU:
+                {
+                    switch (read_id)
+                    {
+                        case MENU_BATT:
+                        {
+                            set_page("Race_battery");
+                            break;
+                        }
+                        case MENU_V:
+                        {
+                            set_page("Race_voltage");
+                            break;
+                        }
+                        case MENU_SPD:
+                        {
+                            set_page("Race_mph");
+                            break;
+                        }
+                        case MENU_INFO:
+                        {
+                            set_page("Info1");
+                            break;
+                        }
+                        case MENU_TCS:
+                        {
+                            set_page("TCS");
+                            break;
+                        }
+                        case MENU_ERROR_MATRIX:
+                        {
+                            set_page("ErrorMatrix");
+                            break;
+                        }
+                    }
+                    break;
+                }
+                case RACE_MPH:
+                {
+                    switch (read_id)
+                    {
+                        case MPH_MENU:
+                        {
+                            set_page("Menu");
+                            break;
+                        }
+                        case MPH_BATTERY:
+                        {
+                            set_page("Race_battery");
+                            break;
+                        }
+                        case MPH_VOLTS:
+                        {
+                            set_page("Race_voltage");
+                            break;
+                        }
+                    }
+                    break;
+                }
+                case RACE_BATTERY:
+                {
+                    switch (read_id)
+                    {
+						case BATTERY_MENU:
+						{
+							set_page("Menu");
+							break;
+						}
+                        case BATTERY_VOLTS:
+                        {
+                            set_page("Voltage");
+                            break;
+                        }
+                        case BATTERY_SPEED:
+                        {
+                            set_page("Menu");
+                            break;
+                        }
+                    }
+                    break;
+                }
+                case INFO1:
+                {
+                    switch (read_id)
+                    {
+                        case INFO1_MENU:
+                        {
+                            set_page("Menu");
+                            break;
+                        }
+                        case INFO1_NEXT:
+                        {
+                            set_page("Info2");
+                            break;
+                        }
+                    }
+                    break;
+                }
+                case INFO2:
+                {
+                    switch (read_id)
+                    {
+						case INFO2_MENU:
+						{
+							set_page("Menu");
+							break;
+						}
+						case INFO2_BACK:
+						{
+							set_page("Info1");
+							break;
+						}
+                    }
+                    break;
+                }
+                case REDWARNING:
+                {
+                    switch (read_id)
+                    {
+                        case RWARNING_PAGE:
+                        {
+                            set_page("ErrorMatrix");
+                            break;
+                        }
+                        case RWARNING_T0:
+                        {
+                            set_page("ErrorMatrix");
+                            break;
+                        }
+                        case RWARNING_T1:
+                        {
+                            set_page("ErrorMatrix");
+                            break;
+                        }
+                    }
+                    break;
+                }
+                case ERRORMATRIX:
+                {
+                    switch (read_id)
+                    {
+                        case EMATRIX_B0:
+                        {
+                            set_page("Menu");
+                            break;
+                        }
+                        case EMATRIX_B1:
+                        {
+                            set_page("Menu");
+                            break;
+                        }
+                        case EMATRIX_B2:
+                        {
+                            set_page("Menu");
+                            break;
+                        }
+                        case EMATRIX_B3:
+                        {
+                            set_page("Menu");
+                            break;
+                        }
+                        case EMATRIX_B4:
+                        {
+                            set_page("Menu");
+                            break;
+                        }
+                        case EMATRIX_B5:
+                        {
+                            set_page("Menu");
+                            break;
+                        }
+                        case EMATRIX_B6:
+                        {
+                            set_page("Menu");
+                            break;
+                        }
+                        case EMATRIX_B7:
+                        {
+                            set_page("Menu");
+                            break;
+                        }
+                    }
+                    break;
+                }
+                case YELLOWWARNING:
+                {
+                    switch (read_id)
+                    {
+						case YWARNING_PAGE:
+						{
+							set_page("ErrorMatrix");
+							break;
+						}
+						case YWARNING_T0:
+						{
+							set_page("ErrorMatrix");
+							break;
+						}
+						case YWARNING_T1:
+						{
+							set_page("ErrorMatrix");
+							break;
+						}
+                    }
+                    break;
+                }
+                case TCS:
+                {
+                    switch (read_id)
+                    {
+                        case TCS_MENU:
+                        {
+                            set_page("Menu");
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+}
+
+/*
 void task_lcd_main()
 {
   lcd.can = &hcan1;
@@ -317,6 +502,7 @@ void task_lcd_main()
     vTaskDelayUntil(&time_init, LCD_MAIN_RATE);
   }
 }
+
 void task_lcd_main()
 {
   lcd.can = &hcan1;
@@ -568,3 +754,4 @@ void task_lcd_main()
     vTaskDelayUntil(&time_init, LCD_MAIN_RATE);
   }
 }
+*/

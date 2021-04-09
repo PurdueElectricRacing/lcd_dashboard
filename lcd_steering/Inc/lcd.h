@@ -18,6 +18,9 @@
 #ifndef LCD_H_
 #define LCD_H_
 
+#define GREAT   1
+#define PER     GREAT
+
 #include "stm32l4xx_hal.h"
 #include "stm32l4xx_hal_can.h"
 #include "stm32l4xx_hal_uart.h"
@@ -110,10 +113,119 @@
 #define BMS_SOC_GREEN		    50
 
 typedef enum {
-	START = 0,
-	RACE = 1,
-	SETTINGS = 2
-}page_t;
+    SPLASH,
+    RACE_VOLTAGE,
+    MENU,
+	RACE_MPH,
+	RACE_BATTERY,
+	INFO1,
+	INFO2,
+	REDWARNING,
+	ERRORMATRIX,
+	YELLOWWARNING,
+	TCS,
+    PAGE_COUNT                                                                          // Always equal to number of pages we're running
+} page_t;
+
+typedef enum {
+	SPLASH_PAGE,
+	SPLASH_PETE,
+	SPLASH_COUNT                                                                          // Always equal to number of pages we're running
+} splash_t;
+
+typedef enum {
+	VOLTAGE_PAGE,
+	VOLTAGE_ONOFF,
+	VOLTAGE_STATUS,
+	VOLTAGE_MENU,
+	VOLTAGE_SPEED,
+	VOLTAGE_VOLTS,
+	VOLTAGE_VOLTS_LABEL,
+	VOLTAGE_BATTERY,
+	VOLTAGE_COUNT                                                                          // Always equal to number of pages we're running
+} race_voltage_t;
+
+typedef enum {
+	MENU_PAGE,
+	MENU_SPD,
+	MENU_V,
+	MENU_BATT,
+	MENU_INFO,
+	MENU_ERROR_MATRIX,
+	MENU_TCS,
+	MENU_COUNT                                                                          // Always equal to number of pages we're running
+} menu_t;
+
+typedef enum {
+	MPH_PAGE,
+	MPH_ONOFF,
+	MPH_STATUS,
+	MPH_MENU,
+	MPH_VOLTS,
+	MPH_SPEED,
+	MPH_SPEED_LABEL,
+	MPH_BATTERY,
+	MPH_COUNT                                                                          // Always equal to number of pages we're running
+} race_mph_t;
+
+typedef enum {
+	BATTERY_PAGE,
+	BATTERY_ONOFF,
+	BATTERY_STATUS,
+	BATTERY_MENU,
+	BATTERY_VOLTS,
+	BATTERY_SPEED,
+	BATTERY_SOC,
+	BATTERY_BATTERY,
+	BATTERY_COUNT                                                                          // Always equal to number of pages we're running
+} race_battery_t;
+
+typedef enum {
+	INFO1_PAGE,
+	INFO1_MENU,
+	INFO1_NEXT,
+	INFO1_COUNT                                                                          // Always equal to number of pages we're running
+} info1_t;
+
+typedef enum {
+	INFO2_PAGE,
+	INFO2_MENU,
+	INFO2_BACK,
+	INFO2_COUNT                                                                          // Always equal to number of pages we're running
+} info2_t;
+
+typedef enum {
+	RWARNING_PAGE,
+	RWARNING_T0,
+	RWARNING_T1,
+	RWARNING_COUNT                                                                          // Always equal to number of pages we're running
+} redwarning_t;
+
+typedef enum {
+	EMATRIX_PAGE,
+	EMATRIX_B0,
+	EMATRIX_B1,
+	EMATRIX_B2,
+	EMATRIX_B3,
+	EMATRIX_B4,
+	EMATRIX_B5,
+	EMATRIX_B6,
+	EMATRIX_B7,
+    PAGE_COUNT                                                                          // Always equal to number of pages we're running
+} errormatrix_t;
+
+typedef enum {
+	YWARNING_PAGE,
+	YWARNING_T0,
+	YWARNING_T1,
+	YWARNING_COUNT                                                                          // Always equal to number of pages we're running
+} yellowwarning_t;
+
+typedef enum {
+	TCS_PAGE,
+	TCS_MENU,
+	TCS_COUNT                                                                          // Always equal to number of pages we're running
+} tcs_t;
 
 //Main LCD structure that holds can handles and all of the queues
 typedef struct
