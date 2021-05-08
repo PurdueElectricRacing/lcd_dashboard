@@ -38,26 +38,15 @@
 #define GREAT PER
 
 //LCD Constants What the LCD SCREEN Sends
-#define START_ID_0			    0x00 //start button ID
-#define START_ID_1			    0x01 //second byte
-#define STOP_ID_0			      0x01 //stop button ID
-#define STOP_ID_1			      0x05
-#define ACTIVE_AERO_ID_0 	  0x01 //active aero ID
-#define ACTIVE_AERO_ID_1	  0x07
-#define ECO_MODE_ID_0		    0x02 //ECO Mode ID
-#define ECO_MODE_ID_1		    0x01
-#define RACE_MODE_ID_0		  0x02 //Race Mode ID
-#define RACE_MODE_ID_1 		  0x02
-#define SPORT_MODE_ID_0		  0x02 //Sport Mode ID
-#define SPORT_MODE_ID_1	  	0x03
-#define LCD_UPDATE_RATE		  1	 //pick a rate that makes 6b1 ~1hz used currently message is sent at 100hz
+#define RACE_START          0
+#define LCD_UPDATE_RATE		1	 //pick a rate that makes 6b1 ~1hz used currently message is sent at 100hz
 //Can Message Constants
-#define START_MSG_ID				0x350
-#define BMS_MSG_ID			    0x6B1
-#define MAIN_ACK_ID					0x360
-#define STEER_SENSE_ID			0x7C0
+#define START_MSG_ID		0x350
+#define BMS_MSG_ID			0x6B1
+#define MAIN_ACK_ID			0x360
+#define STEER_SENSE_ID		0x7C0
 //#define MC_FAULT_ID
-#define MAIN_FAULT_ID		    0x200
+#define MAIN_FAULT_ID		0x200
 
 //Queue Constants
 // OLD: #define RX_CAN_QUEUE_SIZE 	32
@@ -98,10 +87,14 @@
 #define	BMS_SOC_YEL			    50
 #define BMS_SOC_GREEN		    50
 
+#define ID_START                0x102
+#define ID_SDO                  0x581
+#define ID_TPDO                 0x281
+
 typedef enum {
-	START = 0,
-	RACE = 1,
-	SETTINGS = 2
+	SPLASH = 0,
+	ERR,
+	RACE
 }page_t;
 
 //Main LCD structure that holds can handles and all of the queues
@@ -115,6 +108,9 @@ typedef struct
   q_handle_t q_rx_uart;
   q_handle_t q_tx_uart;
 
+  uint8_t    drive_stat;
+  uint16_t   voltage;
+  page_t     page;
 }lcd_t;
 
 //Used to update the LCD screen
@@ -126,8 +122,8 @@ typedef struct
 }bms_data_t;
 
 void task_lcd_main();
-int btn_handler(uint8_t btn);
 void error_blink();
+void task_lcd_help();
 // OLD: void initRTOSObjects(void);
 void initLcd();
 

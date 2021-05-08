@@ -107,18 +107,17 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_CAN1_Init();
+//  MX_CAN1_Init();
   MX_ADC1_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_Delay(DELAY_UART);
-  
 
   can_filter_init(&hcan1);
   HAL_Delay(DELAY_UART);
   HAL_CAN_Start(&hcan1);
-  //__HAL_UART_ENABLE_IT(&huart1, UART_IT_TC);
+//  __HAL_UART_ENABLE_IT(&huart1, UART_IT_TC);
 //  __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
 
   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
@@ -127,6 +126,8 @@ int main(void)
   loop = 0;
   run = 0;
   initLcd(); // sets up queues and timers
+  HAL_Delay(3000);
+  HAL_UART_Receive_IT(lcd.uart, myrx_data, RX_SIZE_UART); //start the receive
 
   /* USER CODE END 2 */
 
@@ -138,17 +139,19 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
+    task_lcd_main();
     if (loop % TX_CAN_RATE == 0)
     {
-      task_txCan();
-    }
-    if (loop % TX_UART_RATE == 0)
-    {
-      task_txUart();
+//      task_txCan();
     }
     if (loop % STEER_RATE == 0)
     {
-      taskPollSteer();
+      //taskPollSteer();
+        task_txUart();
+    }
+    if (loop % 200 == 0)
+    {
+        task_lcd_help();
     }
 
     while (!run); // loop is ran every 1 ms

@@ -43,17 +43,37 @@ uint8_t loop, run;
 *     to be sent to main module.
 *
 ***************************************************************************/
-int btn_handler(uint8_t btn)
+static void btn_handler(uint8_t btn)
 {
   CanTxMsgTypeDef msg;
   msg.IDE = CAN_ID_STD;
   msg.RTR = CAN_RTR_DATA;
-  msg.DLC = 1;
-  msg.StdId = START_MSG_ID;
-  msg.Data[0] = btn;
 
-  qSendToBack(&lcd.q_tx_can, &msg);
-  return 0;
+  switch (btn)
+  {
+    case 0:
+    {
+        msg.DLC = 1;
+        msg.StdId = START_MSG_ID;
+        msg.Data[0] = 0x1;
+
+        qSendToBack(&lcd.q_tx_can, &msg);
+        qSendToBack(&lcd.q_tx_can, &msg);
+        break;
+    }
+
+    case 1:
+    {
+        msg.DLC = 1;
+        msg.StdId = START_MSG_ID;
+        msg.Data[0] = 0x1;
+
+        lcd.drive_stat = !lcd.drive_stat;
+
+        qSendToBack(&lcd.q_tx_can, &msg);
+        break;
+    }
+  }
 }
 
 /***************************************************************************
@@ -93,6 +113,11 @@ void initLcd()
   qConstruct(&lcd.q_rx_uart, sizeof(uart_rx_t));
   qConstruct(&lcd.q_tx_uart, sizeof(uart_tx_t));
 
+  lcd.can = &hcan1;
+  lcd.uart = &huart2;
+  lcd.drive_stat = 1;
+  lcd.voltage = 44100;
+
   RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;   // Enable timer clock in RCC
   TIM2->PSC = 3200 - 1; // AHB2 is configured at 32Mhz
   TIM2->ARR = 10;
@@ -100,7 +125,6 @@ void initLcd()
   TIM2->DIER |= TIM_DIER_UIE;
   NVIC->ISER[0] |= 1 << TIM2_IRQn;
   TIM2->CR1 |= TIM_CR1_CEN;
-
 }
 
 
@@ -124,147 +148,110 @@ void initLcd()
 *     received from can or the lcd screen. This currently is set to run at a 100 Hz.
 *
 ***************************************************************************/
-/*void task_lcd_main()
+void task_lcd_main()
 {
-  lcd.can = &hcan1;
-  lcd.uart = &huart2;
-  page_t page = START;
-  bms_data_t bms;
-  CanRxMsgTypeDef rx_can;
-  uint16_t counter = 0;
-  uint16_t counter_status = 0;
-  uint8_t main_fault_code = 0;
-  TickType_t time_init = 0;
-  uart_rx_t rx_uart;
-  uart_tx_t tx_uart;
-  HAL_UART_Receive_IT(lcd.uart, myrx_data, RX_SIZE_UART); //start the receive
+    // Locals
+    CanRxMsgTypeDef rx;
+    uint16_t        byte_comb;
+    uart_rx_t       rx_uart;
+    uart_tx_t       tx_uart;
 
-  while (1) 
-  {
-    time_init = xTaskGetTickCount(); // get the initial time of the task
+    page_t          page_next;
+    static uint8_t  init;
+    static uint8_t  counts;
 
-    if (counter_status++ % 100 == 0)
+    page_next = lcd.page;
+
+    if (!init)
     {
-    	//btn_handler(1);
-    	//HAL_GPIO_TogglePin(TRACTION_LED_GPIO_Port, TRACTION_LED_Pin);
+        init = 1;
+        set_page("error");
+
+        page_next = ERROR;
     }
 
-    //handle message requests from the LCD screen
-    if (xQueuePeek(lcd.q_rx_uart, &rx_uart, TIMEOUT) == pdTRUE)
+    if (qReceive(&lcd.q_rx_uart, &rx_uart) == QUEUE_SUCCESS)                            // Check if we can pull an item from the queue
     {
-      //HAL_GPIO_TogglePin(SUCCESS_GPIO_Port, SUCCESS_Pin);
-      xQueueReceive(lcd.q_rx_uart, &rx_uart, TIMEOUT);
+        byte_comb = (uint16_t) rx_uart.rx_buffer[2] | (rx_uart.rx_buffer[1] << 8);      // Combine the data bytes
 
-      //determine which button was pressed
-      if (rx_uart.rx_buffer[1] == START_ID_0 && rx_uart.rx_buffer[2] == START_ID_1)
-      {
-        btn_handler(1);
-      } else if (rx_uart.rx_buffer[1] == STOP_ID_0 && rx_uart.rx_buffer[2] == STOP_ID_1)
-      {
-        btn_handler(1);
-      } else if (rx_uart.rx_buffer[1] == ACTIVE_AERO_ID_0 && rx_uart.rx_buffer[2] == ACTIVE_AERO_ID_1)
-      {
-        btn_handler(2);
+        switch (lcd.page)                                                                   // Check which page we're on
+        {
+            case SPLASH:
+            {
+                set_page("race");                                                       // Move to race page
+                page_next = RACE;                                                       // Update page
 
-      } else if (rx_uart.rx_buffer[1] == ECO_MODE_ID_0 && rx_uart.rx_buffer[2] == ECO_MODE_ID_1)
-      {
-        btn_handler(3);
-      } else if (rx_uart.rx_buffer[1] == RACE_MODE_ID_0 && rx_uart.rx_buffer[2] == RACE_MODE_ID_1)
-      {
-        btn_handler(4);
-      } else if (rx_uart.rx_buffer[1] == SPORT_MODE_ID_0 && rx_uart.rx_buffer[2] == SPORT_MODE_ID_1)
-      {
-        btn_handler(5);
-      }
+                break;
+            }
+            case ERR:
+            {
+                btn_handler(1);                                                         // Restart MC
+                set_page("race");                                                       // Move to race page
+                page_next = RACE;                                                       // Update page
+
+                break;
+            }
+            case RACE:
+            {
+                btn_handler(0);                                                         // Send start button
+
+                break;
+            }
+        }
     }
 
-    //receive can messages and update the lcd screen as necessary
-    //Live SOC/Voltage/Temperature
-    if (xQueuePeek(lcd.q_rx_can, &rx_can, TIMEOUT) == pdTRUE)
+    if (lcd.page == ERROR)
     {
-      xQueueReceive(lcd.q_rx_can, &rx_can, TIMEOUT);
-
-      switch (rx_can.StdId)
-      {
-        case BMS_MSG_ID:
+        lcd.drive_stat = 0;
+        if (counts++ == 500)
         {
-          //if Xth message then get ~1hz
-          if (counter++ % LCD_UPDATE_RATE == 0)
-          {
-            //update the screen
-            bms.pack_volt = ((rx_can.Data[2] << 8) | rx_can.Data[3]) / 10;
-            bms.pack_soc = (rx_can.Data[4]) / 2;
-            bms.high_temp = rx_can.Data[5];
-
-            set_value("Char", bms.pack_soc);
-            set_value("Volt", bms.pack_volt);
-            set_value("Temp", bms.high_temp);
-
-            //temp color
-            if (bms.high_temp > BMS_OVER_TEMP_RED)
-            {
-              set_bco("Temp", RED);
-            }
-            else if (bms.high_temp > BMS_OVER_TEMP_YEL)
-            {
-              set_bco("Temp", YELLOW);
-            }
-            else
-            {
-              set_bco("Temp", GREEN);
-            }
-            //volt color
-            if (bms.pack_volt < BMS_UNDER_VOLT_RED)
-            {
-              set_bco("Volt", RED);
-            }
-            else
-            {
-              set_bco("Char", GREEN);
-            }
-
-            if (bms.pack_soc < BMS_SOC_RED)
-            {
-              set_bco("Char", RED);
-            }
-            else if (bms.pack_soc < BMS_SOC_YEL)
-            {
-              set_bco("Char", YELLOW);
-            }
-            else
-            {
-              set_bco("Char", GREEN);
-            }
-          }
-          break;
+            sprintf((char*) &tx_uart.tx_buffer[0], "YEET");
+            set_text("car_stat", (char *) &tx_uart.tx_buffer[0]);
         }
-        case MAIN_FAULT_ID:
-        {
-          //display whatever main faults to the screen
-          if ((counter_status % 5) == 0 && page == 1) {
-            main_fault_code = rx_can.Data[0];
-            sprintf((char*) &tx_uart.tx_buffer[0], "Main Faults: %x ", main_fault_code & 0xff);
-            set_text("noti", (char *) &tx_uart.tx_buffer[0]);
-          }
-          break;
-        }
-        case MAIN_ACK_ID:
-        {
-        	//start message accepted change state to ready to drive
-        	if (page == START && rx_can.Data[0] == 1) {
-        		page = RACE;
-        		set_page("Race");
-        	} else if (page == RACE && rx_can.Data[0] == 2){
-        		page = START;
-        		set_page("Start");
-        	}
-        	break;
-        }
-      }
     }
 
-    vTaskDelayUntil(&time_init, LCD_MAIN_RATE);
-  }
-}*/
+    if (qReceive(&lcd.q_rx_can, &rx) == QUEUE_SUCCESS)
+    {
+        switch (rx.StdId)
+        {
+            case ID_START:
+            {
+                lcd.drive_stat = !lcd.drive_stat;
+                break;
+            }
 
+            case ID_SDO:
+            {
+                break;
+            }
+        }
+    }
 
+    lcd.page = page_next;
+}
+
+void task_lcd_help()
+{
+    uart_tx_t   tx_uart;
+    switch (lcd.page)
+    {
+        case ERROR:
+        {
+            set_text("car_stat", (char*) "skrrt");
+            break;
+        }
+
+        case RACE:
+        {
+            // TODO: Add data timeout
+            if (lcd.voltage > 0)
+            {
+                sprintf((char*) &tx_uart.tx_buffer[0], "%dV", lcd.voltage / 100);
+                set_text("volts", (char *) &tx_uart.tx_buffer[0]);
+            }
+
+            sprintf((char*) &tx_uart.tx_buffer[0], "Drive %s", lcd.drive_stat == 1 ? "On" : "Off");
+            set_text("drive_stat", (char *) &tx_uart.tx_buffer[0]);
+        }
+    }
+}

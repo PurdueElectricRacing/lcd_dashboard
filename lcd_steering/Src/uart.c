@@ -93,10 +93,10 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart)
 ***************************************************************************/
 void task_txUart()
 {
-  static uart_tx_t tx;
+  uart_tx_t tx;
 
   //check if this task is triggered
-  if( qReceive(&lcd.q_tx_uart, &tx) == QUEUE_SUCCESS )
+  if(qReceive(&lcd.q_tx_uart, &tx) == QUEUE_SUCCESS)
   {
 
     //send the message
@@ -134,7 +134,7 @@ void update_lcd(uint8_t* buffer, uint8_t size)
   {
     task_txUart();
   }
-  if(qReceive(&lcd.q_tx_uart, &tx) == QUEUE_SUCCESS)
+  if(qSendToBack(&lcd.q_tx_uart, &tx) == QUEUE_FAILURE)
   {
     //should never get here
     error_blink();
