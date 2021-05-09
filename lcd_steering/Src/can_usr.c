@@ -142,14 +142,14 @@ void task_txCan()
 void can_filter_init(CAN_HandleTypeDef* hcan)
 {
   CAN_FilterTypeDef FilterConf;
-  FilterConf.FilterIdHigh =         BMS_MSG_ID << 5;
-  FilterConf.FilterIdLow =          MAIN_FAULT_ID << 5;
-  FilterConf.FilterMaskIdHigh =     MAIN_ACK_ID << 5;       // 3
-  FilterConf.FilterMaskIdLow =      0;       // 1
+  FilterConf.FilterIdHigh =         0x420 << 5;
+  FilterConf.FilterIdLow =          0x181 << 5;
+  FilterConf.FilterMaskIdHigh =     0x281 << 5;       // 3
+  FilterConf.FilterMaskIdLow =      0x381 << 5;       // 1
   FilterConf.FilterFIFOAssignment = CAN_FilterFIFO0;
   FilterConf.FilterBank = 0;
   FilterConf.FilterMode = CAN_FILTERMODE_IDLIST;
   FilterConf.FilterScale = CAN_FILTERSCALE_16BIT;
-  FilterConf.FilterActivation = DISABLE;
+  FilterConf.FilterActivation = ENABLE;
   HAL_CAN_ConfigFilter(hcan, &FilterConf);
 }

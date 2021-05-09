@@ -127,8 +127,8 @@ int main(void)
 
   loop = 0;
   run = 0;
+  HAL_Delay(4300);
   initLcd(); // sets up queues and timers
-  HAL_Delay(3000);
   HAL_UART_Receive_IT(lcd.uart, myrx_data, RX_SIZE_UART); //start the receive
 
   /* USER CODE END 2 */
@@ -142,6 +142,10 @@ int main(void)
     /* USER CODE BEGIN 3 */
     START_Debounce = START_Debounce > 0 ? START_Debounce - 1 : 0;
 
+    while (lcd.q_rx_can.item_count != 0)
+    {
+        processCAN();
+    }
     task_lcd_main();
     if (loop % TX_CAN_RATE == 0)
     {
@@ -152,7 +156,7 @@ int main(void)
       //taskPollSteer();
         task_txUart();
     }
-    if (loop % 200 == 0)
+    if (loop % 10 == 0)
     {
         task_lcd_help();
     }

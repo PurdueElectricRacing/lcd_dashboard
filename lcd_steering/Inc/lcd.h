@@ -98,6 +98,7 @@
 // Generic defines
 #define NODE_ID                 1                   // Node ID of EMDrive
 #define VOLTS_IMPLAUS           0                   // Implausible voltage
+#define VOLTS_IMPLAUS_ACTUAL    20000               // Lowest voltage we should ever see
 #define PI                      3.14159f            // Not importing math.h for freaking pi oml
 #define WHEEL_DIAM              18                  // Diameter of the wheels in inches
 #define IPM_CONV                1056                // Magic number for converting inches per minute to rpm
@@ -168,7 +169,7 @@ typedef struct
     uint8_t     emdrive_temp;               // Current temperature of the motor controller
     uint16_t    phase_b_current;            // Phase B output current
     uint32_t    velocity;                   // Velocity of the vehicle (in RPM)
-    uint16_t    actual_current;             // Actual current output (not demanded)
+    int16_t     actual_current;             // Actual current output (not demanded)
     uint16_t    current_demand;             // Current demand
     car_state_t vehicle_stat;               // Overall vehicle status (mirrored from main)
     uint16_t    error_stat;                 // Bit flags for specific vehicle wide errors
@@ -202,6 +203,7 @@ typedef struct
 void task_lcd_main();
 void error_blink();
 void task_lcd_help();
+void processCAN();
 // OLD: void initRTOSObjects(void);
 void initLcd();
 

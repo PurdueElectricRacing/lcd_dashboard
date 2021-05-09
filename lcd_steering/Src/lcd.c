@@ -21,25 +21,6 @@
 
 uint8_t loop, run;
 
-// @brief: Parsing function so I don't have to type the data array out each time.
-// @param: uint8_t * data: address of the first byte of the data array
-//         i.e. if first byte is data[3], pass (&data) + 3 * sizeof(uint8_t *)
-static uint32_t parse_from_lil_32(uint8_t * data)
-{
-    return ((uint32_t) *(data + (3 * sizeof(uint8_t *)))) << 24
-            | ((uint32_t) *(data + (2 * sizeof(uint8_t *)))) << 16
-            | ((uint16_t) *(data + (sizeof(uint8_t *)))) << 8
-            | *(data);
-}
-
-// @brief: Parsing function so I don't have to type the data array out each time.
-// @param: uint8_t * data: address of the first byte of the data array
-//         i.e. if first byte is data[3], pass (&data) + 3 * sizeof(uint8_t *)
-static uint16_t parse_from_lil_16(uint8_t * data)
-{
-    return ((uint16_t) *(data + sizeof(uint8_t *)) << 8) | *data;
-}
-
 // @brief: Function to translate output (wheel, in our case) RPM to good 'ol
 //         American speed units
 static void calcSpeed()
@@ -51,20 +32,21 @@ static void calcSpeed()
 // @brief: function for parsing the data returned from the emdrive
 //         TPDO1 - TPDO3 values. These are sent after the sync function
 //         initiates the transaction.
-static void emdrive_parse_pdo(uint16_t id, uint8_t* data)
+static void emdrive_parse_pdo(CanRxMsgTypeDef* rx)
 {
-    if (id == (ID_EMDRIVE_SLAVE_PDO_1 | NODE_ID))
+    if (rx->StdId == (ID_EMDRIVE_SLAVE_PDO_1 | NODE_ID))
     {
-        lcd.torque_actual = parse_from_lil_16(data + BEGIN_DATA_BYTE(6));
-        lcd.position_actual = parse_from_lil_32(data + BEGIN_DATA_BYTE(2));
-        lcd.status_word = parse_from_lil_16(data);
+        lcd.torque_actual = (rx->Data[7] << 8) | rx->Data[6];
+        lcd.position_actual = (rx->Data[5] << 24) | (rx->Data[4] << 16) | (rx->Data[3] << 8) | rx->Data[2];
+
+        lcd.status_word = (rx->Data[1] << 8) | rx->Data[0];
     }
-    else if (id == (ID_EMDRIVE_SLAVE_PDO_2 | NODE_ID))
+    else if (rx->StdId == (ID_EMDRIVE_SLAVE_PDO_2 | NODE_ID))
     {
-        lcd.current_demand = parse_from_lil_16(data + BEGIN_DATA_BYTE(6));
-        lcd.voltage = parse_from_lil_16(data + BEGIN_DATA_BYTE(2));
-        lcd.motor_temp = data[1];
-        lcd.emdrive_temp = data[0];
+        lcd.current_demand = (rx->Data[7] << 8) | rx->Data[6];
+        lcd.voltage = (rx->Data[3] << 8) | rx->Data[2];
+        lcd.motor_temp = rx->Data[1];
+        lcd.emdrive_temp = rx->Data[0];
 
         // TODO: Go branchless!
         if (lcd.voltage < VOLTS_MIN)
@@ -85,11 +67,11 @@ static void emdrive_parse_pdo(uint16_t id, uint8_t* data)
             lcd.error_stat |= ~(1 << OVDMDCURR);
         }
     }
-    else if (id == (ID_EMDRIVE_SLAVE_PDO_3 | NODE_ID))
+    else if (rx->StdId == (ID_EMDRIVE_SLAVE_PDO_3 | NODE_ID))
     {
-        lcd.phase_b_current = parse_from_lil_16(data + BEGIN_DATA_BYTE(6));
-        lcd.velocity = parse_from_lil_32((data + BEGIN_DATA_BYTE(2)));
-        lcd.actual_current = parse_from_lil_16(data);
+        lcd.phase_b_current = (rx->Data[7] << 8) | rx->Data[6];
+        lcd.velocity = (rx->Data[5] << 24) | (rx->Data[4] << 16) | (rx->Data[3] << 8) | rx->Data[2];
+        lcd.actual_current = (rx->Data[1] << 8) | rx->Data[0];
 
         if (lcd.actual_current > CURRENT_MAX)
         {
@@ -124,6 +106,7 @@ static void errorCheck()
 
     if (lcd.error_stat != 0)                        // Check if we have an error
     {
+        set_page("error");
         for (i = 0; i < 16; i++)                    // Loop through each
         {
             if (lcd.error_stat & (1 << i))          // Check if we've found the error (highest priority only)
@@ -350,14 +333,14 @@ void initLcd()
 void task_lcd_main()
 {
     // Locals
-    CanRxMsgTypeDef rx;
+    uart_tx_t   tx_uart;
     //uint16_t        byte_comb;
     //uart_rx_t       rx_uart;
 
     page_t          page_next;
     static uint8_t  init;
 
-    errorCheck();                                                                       // Check errors first and interject with new action
+//    errorCheck();                                                                       // Check errors first and interject with new action
 
     page_next = lcd.page;                                                               // Default to where we were
 
@@ -365,6 +348,9 @@ void task_lcd_main()
     {
         init = 1;                                                                       // Don't hang
         set_page("race");                                                               // Move to race page
+
+        sprintf((char*) &tx_uart.tx_buffer[0], "0A");
+        set_text("speed", (char *) &tx_uart.tx_buffer[0]);
 
         page_next = RACE;                                                               // Update "FSM"
     }
@@ -399,6 +385,13 @@ void task_lcd_main()
 //            }
 //        }
 //    }
+    lcd.page = page_next;
+}
+
+void processCAN()
+{
+    // Locals
+    CanRxMsgTypeDef rx;
 
     if (qReceive(&lcd.q_rx_can, &rx) == QUEUE_SUCCESS)
     {
@@ -423,7 +416,7 @@ void task_lcd_main()
 
             case ID_EMDRIVE_SLAVE_PDO_3 | NODE_ID:
             {
-                emdrive_parse_pdo(rx.StdId, rx.Data);
+                emdrive_parse_pdo(&rx);
 
                 break;
             }
@@ -456,34 +449,50 @@ void task_lcd_main()
             }
         }
     }
-
-    lcd.page = page_next;
 }
 
 void task_lcd_help()
 {
     uart_tx_t   tx_uart;
+    static uint8_t veh_stat_lat;
+    static uint16_t volts_lat;
+    static int16_t curr_lat;
+    static uint32_t stat_word_lat;
+
     switch (lcd.page)
     {
         case RACE:
         {
             // TODO: Add data timeout
-            if (lcd.voltage > 0)
+            if (volts_lat != lcd.voltage)
             {
-                sprintf((char*) &tx_uart.tx_buffer[0], "%dV", lcd.voltage / 100);
-                set_text("volts", (char *) &tx_uart.tx_buffer[0]);
-            }
-            else
-            {
-                sprintf((char*) &tx_uart.tx_buffer[0], "No Data");
-                set_text("volts", (char *) &tx_uart.tx_buffer[0]);
+                if (lcd.voltage < VOLTS_IMPLAUS_ACTUAL)
+                {
+                    sprintf((char*) &tx_uart.tx_buffer[0], "%dV", lcd.voltage / 10);
+                    set_text("volts", (char *) &tx_uart.tx_buffer[0]);
+                    volts_lat = lcd.voltage;
+                }
+                else
+                {
+                    sprintf((char*) &tx_uart.tx_buffer[0], "No Data");
+                    set_text("volts", (char *) &tx_uart.tx_buffer[0]);
+                    volts_lat = 0;
+                }
             }
 
-            sprintf((char*) &tx_uart.tx_buffer[0], "%d mph", (int) lcd.vehicle_speed);
-            set_text("speed", (char *) &tx_uart.tx_buffer[0]);
+            if (curr_lat != lcd.actual_current)
+            {
+                sprintf((char*) &tx_uart.tx_buffer[0], "%dA", (int) lcd.actual_current);
+                set_text("speed", (char *) &tx_uart.tx_buffer[0]);
+                curr_lat = lcd.actual_current;
+            }
 
-            sprintf((char*) &tx_uart.tx_buffer[0], "Drive %s", lcd.vehicle_stat == CAR_STATE_READY2DRIVE ? "On" : "Off");
-            set_text("drive_stat", (char *) &tx_uart.tx_buffer[0]);
+            if (stat_word_lat != lcd.status_word)
+            {
+                sprintf((char*) &tx_uart.tx_buffer[0], "Drive %s", (lcd.status_word & (1 << 2)) ? "On" : "Off");
+                set_text("drive_stat", (char *) &tx_uart.tx_buffer[0]);
+                stat_word_lat = lcd.status_word;
+            }
         }
     }
 }

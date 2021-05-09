@@ -98,7 +98,6 @@ void task_txUart()
   //check if this task is triggered
   if(qReceive(&lcd.q_tx_uart, &tx) == QUEUE_SUCCESS)
   {
-
     //send the message
     HAL_UART_Transmit_IT(lcd.uart, tx.tx_buffer, tx.tx_size);
     //This delay might be able to change. Used to prevent to much throughput to the Nextion
