@@ -19,8 +19,52 @@
 
 #include "lcd.h"
 
-
 uint8_t loop, run;
+
+// @brief: Parsing function so I don't have to type the data array out each time.
+// @param: uint8_t * data: address of the first byte of the data array
+//         i.e. if first byte is data[3], pass (&data) + 3 * sizeof(uint8_t *)
+static uint32_t parse_from_lil_32(uint8_t * data)
+{
+    return ((uint32_t) *(data + (3 * sizeof(uint8_t *)))) << 24
+            | ((uint32_t) *(data + (2 * sizeof(uint8_t *)))) << 16
+            | ((uint16_t) *(data + (sizeof(uint8_t *)))) << 8
+            | *(data);
+}
+
+// @brief: Parsing function so I don't have to type the data array out each time.
+// @param: uint8_t * data: address of the first byte of the data array
+//         i.e. if first byte is data[3], pass (&data) + 3 * sizeof(uint8_t *)
+static uint16_t parse_from_lil_16(uint8_t * data)
+{
+    return ((uint16_t) *(data + sizeof(uint8_t *)) << 8) | *data;
+}
+
+// @brief: function for parsing the data returned from the emdrive
+//         TPDO1 - TPDO3 values. These are sent after the sync function
+//         initiates the transaction.
+static void emdrive_parse_pdo(uint16_t id, uint8_t* data)
+{
+    if (id == (ID_EMDRIVE_SLAVE_PDO_1 | NODE_ID))
+    {
+        lcd.torque_actual = parse_from_lil_16(data + BEGIN_DATA_BYTE(6));
+        lcd.position_actual = parse_from_lil_32(data + BEGIN_DATA_BYTE(2));
+        lcd.status_word = parse_from_lil_16(data);
+    }
+    else if (id == (ID_EMDRIVE_SLAVE_PDO_2 | NODE_ID))
+    {
+        lcd.current_demand = parse_from_lil_16(data + BEGIN_DATA_BYTE(6));
+        lcd.voltage = parse_from_lil_16(data + BEGIN_DATA_BYTE(2));
+        lcd.motor_temp = data[1];
+        lcd.emdrive_temp = data[0];
+    }
+    else if (id == (ID_EMDRIVE_SLAVE_PDO_3 | NODE_ID))
+    {
+        lcd.phase_b_current = parse_from_lil_16(data + BEGIN_DATA_BYTE(6));
+        lcd.velocity = parse_from_lil_32((data + BEGIN_DATA_BYTE(2)));
+        lcd.actual_current = parse_from_lil_16(data);
+    }
+}
 
 /***************************************************************************
 *
@@ -57,8 +101,8 @@ static void btn_handler(uint8_t btn)
         msg.StdId = START_MSG_ID;
         msg.Data[0] = 0x1;
 
-        qSendToBack(&lcd.q_tx_can, &msg);
-        qSendToBack(&lcd.q_tx_can, &msg);
+//        qSendToBack(&lcd.q_tx_can, &msg);
+//        qSendToBack(&lcd.q_tx_can, &msg);
         break;
     }
 
@@ -70,7 +114,7 @@ static void btn_handler(uint8_t btn)
 
         lcd.drive_stat = !lcd.drive_stat;
 
-        qSendToBack(&lcd.q_tx_can, &msg);
+//        qSendToBack(&lcd.q_tx_can, &msg);
         break;
     }
   }
@@ -152,7 +196,7 @@ void task_lcd_main()
 {
     // Locals
     CanRxMsgTypeDef rx;
-    uint16_t        byte_comb;
+    //uint16_t        byte_comb;
     uart_rx_t       rx_uart;
     uart_tx_t       tx_uart;
 
@@ -165,16 +209,16 @@ void task_lcd_main()
     if (!init)
     {
         init = 1;
-        set_page("error");
+        set_page("race");
 
-        page_next = ERROR;
+        page_next = RACE;
     }
 
     if (qReceive(&lcd.q_rx_uart, &rx_uart) == QUEUE_SUCCESS)                            // Check if we can pull an item from the queue
     {
-        byte_comb = (uint16_t) rx_uart.rx_buffer[2] | (rx_uart.rx_buffer[1] << 8);      // Combine the data bytes
+        //byte_comb = (uint16_t) rx_uart.rx_buffer[2] | (rx_uart.rx_buffer[1] << 8);      // Combine the data bytes
 
-        switch (lcd.page)                                                                   // Check which page we're on
+        switch (lcd.page)                                                               // Check which page we're on
         {
             case SPLASH:
             {
@@ -185,7 +229,7 @@ void task_lcd_main()
             }
             case ERR:
             {
-                btn_handler(1);                                                         // Restart MC
+//                btn_handler(1);                                                         // Restart MC
                 set_page("race");                                                       // Move to race page
                 page_next = RACE;                                                       // Update page
 
@@ -193,14 +237,14 @@ void task_lcd_main()
             }
             case RACE:
             {
-                btn_handler(0);                                                         // Send start button
+//                btn_handler(0);                                                         // Send start button
 
                 break;
             }
         }
     }
 
-    if (lcd.page == ERROR)
+    if (lcd.page == ERR)
     {
         lcd.drive_stat = 0;
         if (counts++ == 500)
@@ -222,6 +266,17 @@ void task_lcd_main()
 
             case ID_SDO:
             {
+                break;
+            }
+
+            case ID_EMDRIVE_SLAVE_PDO_1 | NODE_ID:
+
+            case ID_EMDRIVE_SLAVE_PDO_2 | NODE_ID:
+
+            case ID_EMDRIVE_SLAVE_PDO_3 | NODE_ID:
+            {
+                emdrive_parse_pdo(rx.StdId, rx.Data);
+
                 break;
             }
         }

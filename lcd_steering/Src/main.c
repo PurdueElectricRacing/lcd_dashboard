@@ -50,6 +50,7 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 uint8_t myrx_data[RX_SIZE_UART];
+extern uint32_t START_Debounce;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -107,7 +108,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-//  MX_CAN1_Init();
+  MX_CAN1_Init();
   MX_ADC1_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
@@ -117,6 +118,7 @@ int main(void)
   can_filter_init(&hcan1);
   HAL_Delay(DELAY_UART);
   HAL_CAN_Start(&hcan1);
+
 //  __HAL_UART_ENABLE_IT(&huart1, UART_IT_TC);
 //  __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
 
@@ -138,11 +140,12 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    START_Debounce = START_Debounce > 0 ? START_Debounce - 1 : 0;
 
     task_lcd_main();
     if (loop % TX_CAN_RATE == 0)
     {
-//      task_txCan();
+      task_txCan();
     }
     if (loop % STEER_RATE == 0)
     {

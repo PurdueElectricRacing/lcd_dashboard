@@ -53,7 +53,7 @@
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 #include "lcd.h"
-uint32_t START_LastPressedTime=0;
+uint32_t START_Debounce=0;
 //TickType_t TRAC_LastPressedTime=0;
 //TickType_t BTN3_LastPressedTime=0;
 /* USER CODE END 0 */
@@ -213,7 +213,7 @@ void EXTI4_IRQHandler(void)
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
   /* USER CODE BEGIN EXTI4_IRQn 1 */
   //BaseType_t xHigherPriorityTaskWoken;
-  if (TIM2->CNT & 0xffff - START_LastPressedTime > 500)
+  if (START_Debounce == 0)
   {
     CanTxMsgTypeDef msg;
     msg.IDE = CAN_ID_STD;
@@ -223,7 +223,7 @@ void EXTI4_IRQHandler(void)
     msg.Data[0] = 1;
 
     qSendToBack(&lcd.q_tx_can, &msg);
-    START_LastPressedTime = (TIM2->CNT & 0xffff);
+    START_Debounce = 500;
   }
   /* USER CODE END EXTI4_IRQn 1 */
 }

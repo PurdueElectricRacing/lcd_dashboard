@@ -150,6 +150,6 @@ void can_filter_init(CAN_HandleTypeDef* hcan)
   FilterConf.FilterBank = 0;
   FilterConf.FilterMode = CAN_FILTERMODE_IDLIST;
   FilterConf.FilterScale = CAN_FILTERSCALE_16BIT;
-  FilterConf.FilterActivation = ENABLE;
+  FilterConf.FilterActivation = DISABLE;
   HAL_CAN_ConfigFilter(hcan, &FilterConf);
 }

@@ -89,7 +89,13 @@
 
 #define ID_START                0x102
 #define ID_SDO                  0x581
-#define ID_TPDO                 0x281
+#define ID_EMDRIVE_SLAVE_PDO_1  0x180
+#define ID_EMDRIVE_SLAVE_PDO_2  0x280
+#define ID_EMDRIVE_SLAVE_PDO_3  0x380
+
+#define NODE_ID                 1
+
+#define BEGIN_DATA_BYTE(x) (x * sizeof(uint8_t *)) // macro for returning the offset of a can data array
 
 typedef enum {
 	SPLASH = 0,
@@ -110,6 +116,17 @@ typedef struct
 
   uint8_t    drive_stat;
   uint16_t   voltage;
+  uint16_t   torque_actual;
+  uint32_t   position_actual;
+  uint16_t   status_word;
+  uint16_t   electrical_power;
+  uint32_t   error_codes;
+  uint8_t    motor_temp;
+  uint8_t    emdrive_temp;
+  uint16_t   phase_b_current;
+  uint32_t   velocity;
+  uint16_t   actual_current;
+  uint16_t   current_demand;
   page_t     page;
 }lcd_t;
 
