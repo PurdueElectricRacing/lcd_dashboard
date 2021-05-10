@@ -66,13 +66,14 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t loop, run;
+uint8_t run;
+uint16_t loop;
 
 void TIM2_IRQHandler()
 {
     TIM2->SR &= ~TIM_SR_UIF;                                        // Acknowledge the interrupt
     run = 1;                                                        // Signal main loop to process
-    if (loop++ > 200)                                               // Wrap when close to 255 to prevent jitter
+    if (loop++ > 50000)                                             // Wrap when close to max to prevent jitter
     {
         loop = 0;                                                   // Reset loop value
     }

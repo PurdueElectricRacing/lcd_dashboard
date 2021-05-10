@@ -392,6 +392,13 @@ void processCAN()
 {
     // Locals
     CanRxMsgTypeDef rx;
+    static uint16_t tpdo_time;
+
+    // Check if TPDOs aren't sending (will be overwritten if we just got one)
+    if (loop - tpdo_time > TPDO_TIMEOUT)
+    {
+        lcd.status_word = 0x0000;
+    }
 
     if (qReceive(&lcd.q_rx_can, &rx) == QUEUE_SUCCESS)
     {

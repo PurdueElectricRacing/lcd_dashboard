@@ -105,6 +105,7 @@
 #define CURRENT_MAX             13000               // Max MC current
 #define VOLTS_MIN               30000               // Min voltage
 #define VELOCITY_MAX            1300                // Max RPM (~70 MPH)
+#define TPDO_TIMEOUT            1500                // Implausibly high time for TPDO RX
 
 #define BEGIN_DATA_BYTE(x) (x * sizeof(uint8_t *)) // macro for returning the offset of a can data array
 
