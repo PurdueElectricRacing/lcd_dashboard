@@ -145,7 +145,7 @@ int main(void)
 
     while (lcd.q_rx_can.item_count != 0)
     {
-        processCAN();
+      processCAN();
     }
     task_lcd_main();
     if (loop % TX_CAN_RATE == 0)
@@ -155,12 +155,13 @@ int main(void)
     if (loop % STEER_RATE == 0)
     {
       //taskPollSteer();
-        task_txUart();
+      task_txUart();
     }
     if (loop % 10 == 0)
     {
-        task_lcd_help();
+      task_lcd_help();
     }
+    
 
     while (!run); // loop is ran every 1 ms
     run = 0;
@@ -382,11 +383,21 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(LED_PIN_GPIO_Port, LED_PIN_Pin, GPIO_PIN_RESET);
+
   /*Configure GPIO pin : StartButton_DB_Pin */
   GPIO_InitStruct.Pin = StartButton_DB_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(StartButton_DB_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : LED_PIN_Pin */
+  GPIO_InitStruct.Pin = LED_PIN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(LED_PIN_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : TracENButton_DB_Pin BTN3_IC_Pin */
   GPIO_InitStruct.Pin = TracENButton_DB_Pin|BTN3_IC_Pin;
@@ -407,7 +418,7 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/**
+ /**
   * @brief  Period elapsed callback in non blocking mode
   * @note   This function is called  when TIM1 interrupt took place, inside
   * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment

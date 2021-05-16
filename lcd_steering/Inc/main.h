@@ -75,6 +75,8 @@ void Error_Handler(void);
 #define VCAN_RX_GPIO_Port GPIOA
 #define VCAN_TX_Pin GPIO_PIN_12
 #define VCAN_TX_GPIO_Port GPIOA
+#define LED_PIN_Pin GPIO_PIN_3
+#define LED_PIN_GPIO_Port GPIOB
 #define TracENButton_DB_Pin GPIO_PIN_5
 #define TracENButton_DB_GPIO_Port GPIOB
 #define TracENButton_DB_EXTI_IRQn EXTI9_5_IRQn

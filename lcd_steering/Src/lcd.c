@@ -18,6 +18,7 @@
 ***************************************************************************/
 
 #include "lcd.h"
+#include <stdbool.h>
 
 uint8_t loop, run;
 
@@ -25,159 +26,154 @@ uint8_t loop, run;
 //         American speed units
 static void calcSpeed()
 {
-    lcd.vehicle_speed = ((float) lcd.velocity) * PI * WHEEL_DIAM;               // Revolutions / minute * circumference = inches / minute
-    lcd.vehicle_speed /= IPM_CONV;                                              // Convert imp to mph
+  lcd.vehicle_speed = ((float)lcd.velocity) * PI * WHEEL_DIAM; // Revolutions / minute * circumference = inches / minute
+  lcd.vehicle_speed /= IPM_CONV;                               // Convert imp to mph
 }
 
 // @brief: function for parsing the data returned from the emdrive
 //         TPDO1 - TPDO3 values. These are sent after the sync function
 //         initiates the transaction.
-static void emdrive_parse_pdo(CanRxMsgTypeDef* rx)
+static void emdrive_parse_pdo(CanRxMsgTypeDef *rx)
 {
-    if (rx->StdId == (ID_EMDRIVE_SLAVE_PDO_1 | NODE_ID))
+  if (rx->StdId == (ID_EMDRIVE_SLAVE_PDO_1 | NODE_ID))
+  {
+    lcd.torque_actual = (rx->Data[7] << 8) | rx->Data[6];
+    lcd.position_actual = (rx->Data[5] << 24) | (rx->Data[4] << 16) | (rx->Data[3] << 8) | rx->Data[2];
+
+    lcd.status_word = (rx->Data[1] << 8) | rx->Data[0];
+  }
+  else if (rx->StdId == (ID_EMDRIVE_SLAVE_PDO_2 | NODE_ID))
+  {
+    lcd.current_demand = (rx->Data[7] << 8) | rx->Data[6];
+    lcd.voltage = (rx->Data[3] << 8) | rx->Data[2];
+    lcd.motor_temp = rx->Data[1];
+    lcd.emdrive_temp = rx->Data[0];
+
+    // TODO: Go branchless!
+    if (lcd.voltage < VOLTS_MIN)
     {
-        lcd.torque_actual = (rx->Data[7] << 8) | rx->Data[6];
-        lcd.position_actual = (rx->Data[5] << 24) | (rx->Data[4] << 16) | (rx->Data[3] << 8) | rx->Data[2];
-
-        lcd.status_word = (rx->Data[1] << 8) | rx->Data[0];
+      lcd.error_stat |= 1 << UVVOLT;
     }
-    else if (rx->StdId == (ID_EMDRIVE_SLAVE_PDO_2 | NODE_ID))
+    else
     {
-        lcd.current_demand = (rx->Data[7] << 8) | rx->Data[6];
-        lcd.voltage = (rx->Data[3] << 8) | rx->Data[2];
-        lcd.motor_temp = rx->Data[1];
-        lcd.emdrive_temp = rx->Data[0];
-
-        // TODO: Go branchless!
-        if (lcd.voltage < VOLTS_MIN)
-        {
-            lcd.error_stat |= 1 << UVVOLT;
-        }
-        else
-        {
-            lcd.error_stat |= ~(1 << UVVOLT);
-        }
-
-        if (lcd.current_demand > CURRENT_MAX)
-        {
-            lcd.error_stat |= 1 << OVDMDCURR;
-        }
-        else
-        {
-            lcd.error_stat |= ~(1 << OVDMDCURR);
-        }
+      lcd.error_stat |= ~(1 << UVVOLT);
     }
-    else if (rx->StdId == (ID_EMDRIVE_SLAVE_PDO_3 | NODE_ID))
+
+    if (lcd.current_demand > CURRENT_MAX)
     {
-        lcd.phase_b_current = (rx->Data[7] << 8) | rx->Data[6];
-        lcd.velocity = (rx->Data[5] << 24) | (rx->Data[4] << 16) | (rx->Data[3] << 8) | rx->Data[2];
-        lcd.actual_current = (rx->Data[1] << 8) | rx->Data[0];
-
-        if (lcd.actual_current > CURRENT_MAX)
-        {
-            lcd.error_stat |= 1 << OVCURR;
-        }
-        else
-        {
-            lcd.error_stat |= ~(1 << OVCURR);
-        }
-
-        if (lcd.velocity > VELOCITY_MAX)
-        {
-            lcd.error_stat |= 1 << OVSPEED;
-        }
-        else
-        {
-            lcd.error_stat &= ~(1 << OVSPEED);
-        }
-
-        calcSpeed();
+      lcd.error_stat |= 1 << OVDMDCURR;
     }
+    else
+    {
+      lcd.error_stat |= ~(1 << OVDMDCURR);
+    }
+  }
+  else if (rx->StdId == (ID_EMDRIVE_SLAVE_PDO_3 | NODE_ID))
+  {
+    lcd.phase_b_current = (rx->Data[7] << 8) | rx->Data[6];
+    lcd.velocity = (rx->Data[5] << 24) | (rx->Data[4] << 16) | (rx->Data[3] << 8) | rx->Data[2];
+    lcd.actual_current = (rx->Data[1] << 8) | rx->Data[0];
+
+    if (lcd.actual_current > CURRENT_MAX)
+    {
+      lcd.error_stat |= 1 << OVCURR;
+    }
+    else
+    {
+      lcd.error_stat |= ~(1 << OVCURR);
+    }
+
+    if (lcd.velocity > VELOCITY_MAX)
+    {
+      lcd.error_stat |= 1 << OVSPEED;
+    }
+    else
+    {
+      lcd.error_stat &= ~(1 << OVSPEED);
+    }
+
+    calcSpeed();
+  }
 }
 
 // @brief: Checks all values RX'd via CAN to see if we have any errors in
 //         in the system so we can let the driver know what's going on
 static void errorCheck()
 {
-    // Locals
-    uint8_t   i;                                    // Loop counter
-    uart_tx_t tx_uart;                              // Buffer for TX transmission
-    uart_tx_t tx_uart2;                             // Buffer for TX transmission
+  // Locals
+  uint8_t i;          // Loop counter
+  uart_tx_t tx_uart;  // Buffer for TX transmission
+  uart_tx_t tx_uart2; // Buffer for TX transmission
 
-    if (lcd.error_stat != 0)                        // Check if we have an error
+  if (lcd.error_stat != 0) // Check if we have an error
+  {
+    set_page("error");
+    for (i = 0; i < 16; i++) // Loop through each
     {
-        set_page("error");
-        for (i = 0; i < 16; i++)                    // Loop through each
+      if (lcd.error_stat & (1 << i)) // Check if we've found the error (highest priority only)
+      {
+        switch (i) // Check how we need to handle the error
         {
-            if (lcd.error_stat & (1 << i))          // Check if we've found the error (highest priority only)
-            {
-                switch(i)                           // Check how we need to handle the error
-                {
-                    case MC_ERROR:                  // Motor controller error. This is a special one
-                    {
-                        sprintf((char*) &tx_uart.tx_buffer[0], "MC ERROR");
-                        sprintf((char*) &tx_uart2.tx_buffer[0], "%ld", lcd.error_codes);
-                        return;
-                    }
-
-                    case UVVOLT:
-                    {
-                        sprintf((char*) &tx_uart.tx_buffer[0], "UNDERVOLT");
-                        sprintf((char*) &tx_uart2.tx_buffer[0], "%dV", lcd.voltage / 100);
-                        break;
-                    }
-
-
-                    case OVCURR:
-                    {
-                        sprintf((char*) &tx_uart.tx_buffer[0], "OVERCURRENT");
-                        sprintf((char*) &tx_uart2.tx_buffer[0], "%dA", lcd.actual_current / 100);
-                        break;
-                    }
-
-
-                    case OVDMDCURR:
-                    {
-                        sprintf((char*) &tx_uart.tx_buffer[0], "OVERCURRDEM");
-                        sprintf((char*) &tx_uart2.tx_buffer[0], "%dA", lcd.current_demand / 100);
-                        break;
-                    }
-
-
-                    case VEH_ERROR:
-                    {
-                        sprintf((char*) &tx_uart.tx_buffer[0], "MAIN ERR");
-                        sprintf((char*) &tx_uart2.tx_buffer[0], "%d", lcd.vehicle_stat);
-                        break;
-                    }
-
-
-                    case OVSPEED:
-                    {
-                        sprintf((char*) &tx_uart.tx_buffer[0], "OVERSPEED");
-                        sprintf((char*) &tx_uart2.tx_buffer[0], "%ld RPM", lcd.velocity);
-                        break;
-                    }
-
-
-                    case PED_ERROR:
-                    {
-                        sprintf((char*) &tx_uart.tx_buffer[0], "PEDAL ERROR");
-                        sprintf((char*) &tx_uart2.tx_buffer[0], "%d", lcd.pedalbox_stat);
-                        break;
-                    }
-                }
-
-                set_text("car_stat", (char*) "!ERROR!");
-                set_text("car_err", (char*) &tx_uart.tx_buffer[0]);
-                set_text("t0", (char*) &tx_uart2.tx_buffer[0]);
-            }
+        case MC_ERROR: // Motor controller error. This is a special one
+        {
+          sprintf((char *)&tx_uart.tx_buffer[0], "MC ERROR");
+          sprintf((char *)&tx_uart2.tx_buffer[0], "%ld", lcd.error_codes);
+          return;
         }
+
+        case UVVOLT:
+        {
+          sprintf((char *)&tx_uart.tx_buffer[0], "UNDERVOLT");
+          sprintf((char *)&tx_uart2.tx_buffer[0], "%dV", lcd.voltage / 100);
+          break;
+        }
+
+        case OVCURR:
+        {
+          sprintf((char *)&tx_uart.tx_buffer[0], "OVERCURRENT");
+          sprintf((char *)&tx_uart2.tx_buffer[0], "%dA", lcd.actual_current / 100);
+          break;
+        }
+
+        case OVDMDCURR:
+        {
+          sprintf((char *)&tx_uart.tx_buffer[0], "OVERCURRDEM");
+          sprintf((char *)&tx_uart2.tx_buffer[0], "%dA", lcd.current_demand / 100);
+          break;
+        }
+
+        case VEH_ERROR:
+        {
+          sprintf((char *)&tx_uart.tx_buffer[0], "MAIN ERR");
+          sprintf((char *)&tx_uart2.tx_buffer[0], "%d", lcd.vehicle_stat);
+          break;
+        }
+
+        case OVSPEED:
+        {
+          sprintf((char *)&tx_uart.tx_buffer[0], "OVERSPEED");
+          sprintf((char *)&tx_uart2.tx_buffer[0], "%ld RPM", lcd.velocity);
+          break;
+        }
+
+        case PED_ERROR:
+        {
+          sprintf((char *)&tx_uart.tx_buffer[0], "PEDAL ERROR");
+          sprintf((char *)&tx_uart2.tx_buffer[0], "%d", lcd.pedalbox_stat);
+          break;
+        }
+        }
+
+        set_text("car_stat", (char *)"!ERROR!");
+        set_text("car_err", (char *)&tx_uart.tx_buffer[0]);
+        set_text("t0", (char *)&tx_uart2.tx_buffer[0]);
+      }
     }
-    else
-    {
-        lcd.page = RACE;
-    }
+  }
+  else
+  {
+    lcd.page = RACE;
+  }
 }
 
 /***************************************************************************
@@ -209,28 +205,28 @@ static void btn_handler(uint8_t btn)
 
   switch (btn)
   {
-    case 0:
-    {
-        msg.DLC = 1;
-        msg.StdId = START_MSG_ID;
-        msg.Data[0] = 0x1;
+  case 0:
+  {
+    msg.DLC = 1;
+    msg.StdId = START_MSG_ID;
+    msg.Data[0] = 0x1;
 
-//        qSendToBack(&lcd.q_tx_can, &msg);
-//        qSendToBack(&lcd.q_tx_can, &msg);
-        break;
-    }
+    //        qSendToBack(&lcd.q_tx_can, &msg);
+    //        qSendToBack(&lcd.q_tx_can, &msg);
+    break;
+  }
 
-    case 1:
-    {
-        msg.DLC = 1;
-        msg.StdId = START_MSG_ID;
-        msg.Data[0] = 0x1;
+  case 1:
+  {
+    msg.DLC = 1;
+    msg.StdId = START_MSG_ID;
+    msg.Data[0] = 0x1;
 
-        lcd.drive_stat = !lcd.drive_stat;
+    lcd.drive_stat = !lcd.drive_stat;
 
-//        qSendToBack(&lcd.q_tx_can, &msg);
-        break;
-    }
+    //        qSendToBack(&lcd.q_tx_can, &msg);
+    break;
+  }
   }
 }
 
@@ -299,16 +295,16 @@ void initLcd()
   lcd.brake = 0;
   lcd.pc_stat = 0;
   lcd.pedalbox_stat = PEDALBOX_STATUS_NO_ERROR;
+  lcd.start_button_timer = -1;
 
-  RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;   // Enable timer clock in RCC
-  TIM2->PSC = 3200 - 1; // AHB2 is configured at 32Mhz
+  RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN; // Enable timer clock in RCC
+  TIM2->PSC = 3200 - 1;                 // AHB2 is configured at 32Mhz
   TIM2->ARR = 10;
   TIM2->CR1 &= ~(TIM_CR1_DIR);
   TIM2->DIER |= TIM_DIER_UIE;
   NVIC->ISER[0] |= 1 << TIM2_IRQn;
   TIM2->CR1 |= TIM_CR1_CEN;
 }
-
 
 /***************************************************************************
 *
@@ -332,174 +328,211 @@ void initLcd()
 ***************************************************************************/
 void task_lcd_main()
 {
-    // Locals
-    uart_tx_t   tx_uart;
-    //uint16_t        byte_comb;
-    //uart_rx_t       rx_uart;
+  // Locals
+  uart_tx_t tx_uart;
+  //uint16_t        byte_comb;
+  //uart_rx_t       rx_uart;
 
-    page_t          page_next;
-    static uint8_t  init;
+  page_t page_next;
+  static uint8_t init;
+  uint32_t current_timer;
+  static bool start_message_sent = false;
+  //    errorCheck();                                                                       // Check errors first and interject with new action
 
-//    errorCheck();                                                                       // Check errors first and interject with new action
+  page_next = lcd.page; // Default to where we were
 
-    page_next = lcd.page;                                                               // Default to where we were
+  if (!init) // Wait for bootup sequence
+  {
+    init = 1;         // Don't hang
+    set_page("race"); // Move to race page
 
-    if (!init)                                                                          // Wait for bootup sequence
+    sprintf((char *)&tx_uart.tx_buffer[0], "0A");
+    set_text("speed", (char *)&tx_uart.tx_buffer[0]);
+
+    page_next = RACE; // Update "FSM"
+  }
+
+
+  // check that the switched is pressed
+  if (HAL_GPIO_ReadPin(StartButton_DB_GPIO_Port, StartButton_DB_Pin) == GPIO_PIN_RESET)
+  {
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_SET);
+
+    // if timer hasn't been set, set it now
+    if (lcd.start_button_timer == ((uint32_t) -1))
     {
-        init = 1;                                                                       // Don't hang
-        set_page("race");                                                               // Move to race page
-
-        sprintf((char*) &tx_uart.tx_buffer[0], "0A");
-        set_text("speed", (char *) &tx_uart.tx_buffer[0]);
-
-        page_next = RACE;                                                               // Update "FSM"
+      lcd.start_button_timer = HAL_GetTick();
     }
 
-// Due to instability with button handling, no user requests for now :/
-//    if (qReceive(&lcd.q_rx_uart, &rx_uart) == QUEUE_SUCCESS)                            // Check if we can pull an item from the queue
-//    {
-//        //byte_comb = (uint16_t) rx_uart.rx_buffer[2] | (rx_uart.rx_buffer[1] << 8);      // Combine the data bytes
-//
-//        switch (lcd.page)                                                               // Check which page we're on
-//        {
-//            case SPLASH:
-//            {
-//                set_page("race");                                                       // Move to race page
-//                page_next = RACE;                                                       // Update page
-//
-//                break;
-//            }
-//            case ERR:
-//            {
-////                btn_handler(1);                                                         // Restart MC
-//                set_page("race");                                                       // Move to race page
-//                page_next = RACE;                                                       // Update page
-//
-//                break;
-//            }
-//            case RACE:
-//            {
-////                btn_handler(0);                                                         // Send start button
-//
-//                break;
-//            }
-//        }
-//    }
-    lcd.page = page_next;
+    current_timer = HAL_GetTick() - lcd.start_button_timer;
+
+    // if the start button is being held, but not for too long 
+    if (current_timer >= START_BUTTON_HOLD_DOWN 
+        && !start_message_sent)
+    {
+      CanTxMsgTypeDef msg;
+      msg.IDE = CAN_ID_STD;
+      msg.RTR = CAN_RTR_DATA;
+      msg.DLC = 1;
+      msg.StdId = START_MSG_ID;
+      msg.Data[0] = 1;
+      lcd.start_button_timer = -1;
+      qSendToBack(&lcd.q_tx_can, &msg);
+      start_message_sent = true;
+    }
+  }
+  else
+  {
+    lcd.start_button_timer = -1;
+    start_message_sent = false;
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_RESET);
+  }
+
+  // Due to instability with button handling, no user requests for now :/
+  //    if (qReceive(&lcd.q_rx_uart, &rx_uart) == QUEUE_SUCCESS)                            // Check if we can pull an item from the queue
+  //    {
+  //        //byte_comb = (uint16_t) rx_uart.rx_buffer[2] | (rx_uart.rx_buffer[1] << 8);      // Combine the data bytes
+  //
+  //        switch (lcd.page)                                                               // Check which page we're on
+  //        {
+  //            case SPLASH:
+  //            {
+  //                set_page("race");                                                       // Move to race page
+  //                page_next = RACE;                                                       // Update page
+  //
+  //                break;
+  //            }
+  //            case ERR:
+  //            {
+  ////                btn_handler(1);                                                         // Restart MC
+  //                set_page("race");                                                       // Move to race page
+  //                page_next = RACE;                                                       // Update page
+  //
+  //                break;
+  //            }
+  //            case RACE:
+  //            {
+  ////                btn_handler(0);                                                         // Send start button
+  //
+  //                break;
+  //            }
+  //        }
+  //    }
+  lcd.page = page_next;
 }
 
 void processCAN()
 {
-    // Locals
-    CanRxMsgTypeDef rx;
-    static uint16_t tpdo_time;
+  // Locals
+  CanRxMsgTypeDef rx;
+  static uint16_t tpdo_time;
 
-    // Check if TPDOs aren't sending (will be overwritten if we just got one)
-    if (loop - tpdo_time > TPDO_TIMEOUT)
+  // Check if TPDOs aren't sending (will be overwritten if we just got one)
+  if (loop - tpdo_time > TPDO_TIMEOUT)
+  {
+    lcd.status_word = 0x0000;
+  }
+
+  if (qReceive(&lcd.q_rx_can, &rx) == QUEUE_SUCCESS)
+  {
+    switch (rx.StdId)
     {
-        lcd.status_word = 0x0000;
+    case ID_START:
+    {
+      lcd.drive_stat = !lcd.drive_stat;
+      break;
     }
 
-    if (qReceive(&lcd.q_rx_can, &rx) == QUEUE_SUCCESS)
+    case ID_SDO:
     {
-        switch (rx.StdId)
-        {
-            case ID_START:
-            {
-                lcd.drive_stat = !lcd.drive_stat;
-                break;
-            }
+      // Unused. Can catch individual SDO reads
 
-            case ID_SDO:
-            {
-                // Unused. Can catch individual SDO reads
-
-                break;
-            }
-
-            case ID_EMDRIVE_SLAVE_PDO_1 | NODE_ID:
-
-            case ID_EMDRIVE_SLAVE_PDO_2 | NODE_ID:
-
-            case ID_EMDRIVE_SLAVE_PDO_3 | NODE_ID:
-            {
-                emdrive_parse_pdo(&rx);
-
-                break;
-            }
-
-            case ID_HEARTBEAT:
-            {
-                lcd.vehicle_stat = rx.Data[0];
-                lcd.pedalbox_stat = rx.Data[1];
-                lcd.pc_stat = rx.Data[2];
-
-                if (lcd.vehicle_stat == CAR_STATE_ERROR || lcd.vehicle_stat == CAR_STATE_RESET)
-                {
-                    lcd.error_stat |= 1 << VEH_ERROR;
-                }
-                else
-                {
-                    lcd.error_stat |= ~(1 << VEH_ERROR);
-                }
-
-                if (lcd.pedalbox_stat != PEDALBOX_STATUS_NO_ERROR)
-                {
-                    lcd.error_stat |= 1 << PED_ERROR;
-                }
-                else
-                {
-                    lcd.error_stat |= ~(1 << PED_ERROR);
-                }
-
-                break;
-            }
-        }
+      break;
     }
+
+    case ID_EMDRIVE_SLAVE_PDO_1 | NODE_ID:
+
+    case ID_EMDRIVE_SLAVE_PDO_2 | NODE_ID:
+
+    case ID_EMDRIVE_SLAVE_PDO_3 | NODE_ID:
+    {
+      emdrive_parse_pdo(&rx);
+
+      break;
+    }
+
+    case ID_HEARTBEAT:
+    {
+      lcd.vehicle_stat = rx.Data[0];
+      lcd.pedalbox_stat = rx.Data[1];
+      lcd.pc_stat = rx.Data[2];
+
+      if (lcd.vehicle_stat == CAR_STATE_ERROR || lcd.vehicle_stat == CAR_STATE_RESET)
+      {
+        lcd.error_stat |= 1 << VEH_ERROR;
+      }
+      else
+      {
+        lcd.error_stat |= ~(1 << VEH_ERROR);
+      }
+
+      if (lcd.pedalbox_stat != PEDALBOX_STATUS_NO_ERROR)
+      {
+        lcd.error_stat |= 1 << PED_ERROR;
+      }
+      else
+      {
+        lcd.error_stat |= ~(1 << PED_ERROR);
+      }
+
+      break;
+    }
+    }
+  }
 }
 
 void task_lcd_help()
 {
-    uart_tx_t   tx_uart;
-    static uint8_t veh_stat_lat;
-    static uint16_t volts_lat;
-    static int16_t curr_lat;
-    static uint32_t stat_word_lat;
+  uart_tx_t tx_uart;
+  static uint8_t veh_stat_lat;
+  static uint16_t volts_lat;
+  static int16_t curr_lat;
+  static uint32_t stat_word_lat;
 
-    switch (lcd.page)
+  switch (lcd.page)
+  {
+  case RACE:
+  {
+    // TODO: Add data timeout
+    if (volts_lat != lcd.voltage)
     {
-        case RACE:
-        {
-            // TODO: Add data timeout
-            if (volts_lat != lcd.voltage)
-            {
-                if (lcd.voltage < VOLTS_IMPLAUS_ACTUAL)
-                {
-                    sprintf((char*) &tx_uart.tx_buffer[0], "%dV", lcd.voltage / 10);
-                    set_text("volts", (char *) &tx_uart.tx_buffer[0]);
-                    volts_lat = lcd.voltage;
-                }
-                else
-                {
-                    sprintf((char*) &tx_uart.tx_buffer[0], "No Data");
-                    set_text("volts", (char *) &tx_uart.tx_buffer[0]);
-                    volts_lat = 0;
-                }
-            }
-
-            if (curr_lat != lcd.actual_current)
-            {
-                sprintf((char*) &tx_uart.tx_buffer[0], "%dA", (int) lcd.actual_current);
-                set_text("speed", (char *) &tx_uart.tx_buffer[0]);
-                curr_lat = lcd.actual_current;
-            }
-
-            if (stat_word_lat != lcd.status_word)
-            {
-                sprintf((char*) &tx_uart.tx_buffer[0], "Drive %s", (lcd.status_word & (1 << 2)) ? "On" : "Off");
-                set_text("drive_stat", (char *) &tx_uart.tx_buffer[0]);
-                stat_word_lat = lcd.status_word;
-            }
-        }
+      if (lcd.voltage < VOLTS_IMPLAUS_ACTUAL)
+      {
+        sprintf((char *)&tx_uart.tx_buffer[0], "%dV", lcd.voltage / 10);
+        set_text("volts", (char *)&tx_uart.tx_buffer[0]);
+        volts_lat = lcd.voltage;
+      }
+      else
+      {
+        sprintf((char *)&tx_uart.tx_buffer[0], "No Data");
+        set_text("volts", (char *)&tx_uart.tx_buffer[0]);
+        volts_lat = 0;
+      }
     }
+
+    if (curr_lat != lcd.actual_current)
+    {
+      sprintf((char *)&tx_uart.tx_buffer[0], "%dA", (int)lcd.actual_current);
+      set_text("speed", (char *)&tx_uart.tx_buffer[0]);
+      curr_lat = lcd.actual_current;
+    }
+
+    if (stat_word_lat != lcd.status_word)
+    {
+      sprintf((char *)&tx_uart.tx_buffer[0], "Drive %s", (lcd.status_word & (1 << 2)) ? "On" : "Off");
+      set_text("drive_stat", (char *)&tx_uart.tx_buffer[0]);
+      stat_word_lat = lcd.status_word;
+    }
+  }
+  }
 }

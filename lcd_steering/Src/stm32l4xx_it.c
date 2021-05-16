@@ -213,18 +213,7 @@ void EXTI4_IRQHandler(void)
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
   /* USER CODE BEGIN EXTI4_IRQn 1 */
   //BaseType_t xHigherPriorityTaskWoken;
-  if (START_Debounce == 0)
-  {
-    CanTxMsgTypeDef msg;
-    msg.IDE = CAN_ID_STD;
-    msg.RTR = CAN_RTR_DATA;
-    msg.DLC = 1;
-    msg.StdId = START_MSG_ID;
-    msg.Data[0] = 1;
 
-    qSendToBack(&lcd.q_tx_can, &msg);
-    START_Debounce = 500;
-  }
   /* USER CODE END EXTI4_IRQn 1 */
 }
 

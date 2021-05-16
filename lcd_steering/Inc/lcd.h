@@ -109,6 +109,8 @@
 
 #define BEGIN_DATA_BYTE(x) (x * sizeof(uint8_t *)) // macro for returning the offset of a can data array
 
+#define START_BUTTON_HOLD_DOWN 1000 // have to hold start button for 1
+
 typedef enum {
 	SPLASH = 0,
 	ERR,
@@ -180,6 +182,7 @@ typedef struct
     uint8_t     pc_stat;                    // Precharge status
     pedalbox_status_t pedalbox_stat;        // Pedalbox status
     page_t      page;                       // Current LCD page
+    uint32_t    start_button_timer;            // timer that's started when start button is pressed
 
     /*
      * error_stat flags:
